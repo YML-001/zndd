@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>中南点点 · HTML 原型入口</title>
+  <link rel="icon" href="assets/pc/logo.svg">
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Microsoft YaHei", sans-serif; color: #1e323f; min-height: 100vh;
+      background: linear-gradient(180deg, #1f5fd6 0, #3a8ce8 220px, #e3f1f9 220px); padding: 48px 20px; }
+    .wrap { max-width: 1080px; margin: 0 auto; }
+    .brand { display: flex; align-items: center; gap: 14px; color: #fff; margin-bottom: 36px; }
+    .brand img { width: 56px; height: 56px; background: #fff; border-radius: 50%; padding: 3px; }
+    .brand h1 { font-size: 28px; letter-spacing: 1px; }
+    .brand p { font-size: 14px; opacity: .9; margin-top: 4px; }
+    .cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px; }
+    .card { background: #fff; border-radius: 16px; padding: 24px; box-shadow: 0 10px 30px rgba(30, 80, 140, .1); display: flex; flex-direction: column; }
+    .card__tag { align-self: flex-start; font-size: 12px; font-weight: 600; padding: 3px 10px; border-radius: 10px; background: #e3f1f9; color: #3087cc; }
+    .card h2 { font-size: 20px; margin: 12px 0 8px; }
+    .card p { color: #627079; font-size: 14px; line-height: 1.7; flex: 1; }
+    .card ul { margin: 10px 0 18px 18px; color: #627079; font-size: 13px; line-height: 1.9; }
+    .card a.go { display: inline-flex; align-items: center; justify-content: center; height: 40px; border-radius: 8px; background: linear-gradient(270deg, #469fff, #065cf8); color: #fff; font-weight: 600; text-decoration: none; }
+    .card .sub { margin-top: 10px; display: flex; gap: 14px; flex-wrap: wrap; font-size: 13px; }
+    .card .sub a { color: #3087cc; text-decoration: none; }
+    .panel { margin-top: 24px; background: #fff; border-radius: 16px; padding: 22px 24px; box-shadow: 0 10px 30px rgba(30, 80, 140, .08); }
+    .panel h3 { font-size: 16px; margin-bottom: 4px; }
+    .panel > p { color: #627079; font-size: 13px; margin-bottom: 14px; line-height: 1.7; }
+    .users { display: flex; flex-wrap: wrap; gap: 10px; }
+    .users button { border: 1px solid #c7e1f0; background: #f6fcff; color: #1e323f; border-radius: 18px; padding: 8px 14px; font-size: 13px; cursor: pointer; }
+    .users button.is-cur { background: #3087cc; border-color: #3087cc; color: #fff; }
+    .ops { margin-top: 16px; display: flex; gap: 12px; align-items: center; flex-wrap: wrap; }
+    .ops button { border: 1px solid #ffd0d0; background: #fff6f6; color: #e64a4a; border-radius: 8px; padding: 8px 16px; font-size: 13px; cursor: pointer; }
+    .ops span { color: #627079; font-size: 13px; }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="brand"><img src="assets/pc/logo.svg" alt=""><div><h1>中南点点 · HTML 原型</h1><p>移动端 / PC 端 / 后台管理端，三端共用一份本地演示数据</p></div></div>
+    <div class="cards">
+      <div class="card"><span class="card__tag">uni-app H5</span><h2>移动端</h2>
+        <p>复刻 /ywViews/bbs/*：首页、发布、消息、我的四个 Tab，以及帖子详情、私信、草稿、举报与规则页。</p>
+        <ul><li>桌面浏览器显示手机外框，手机访问自动全屏</li><li>从智慧学工首页悬浮球进入</li></ul>
+        <a class="go" href="h5.html#/ywViews/bbs/home/index">打开移动端</a>
+        <div class="sub"><a href="h5.html#/pages/home">智慧学工首页入口</a><a href="h5.html#/ywViews/bbs/profile/index">我的</a></div></div>
+      <div class="card"><span class="card__tag">Vue3 + Element Plus</span><h2>PC 端</h2>
+        <p>复刻 /bbs/home/index：分类、排序、搜索、热议 TOP5、部门排行、帖子详情抽屉、发布、草稿、私信、举报记录。</p>
+        <ul><li>顶部导航沿用智慧学工外壳</li><li>右下角悬浮「中南点点」入口</li></ul>
+        <a class="go" href="pc.html#/bbs/home/index">打开 PC 端</a>
+        <div class="sub"><a href="pc.html#/bbs/post/publish">发布新帖</a><a href="pc.html#/bbs/profile/reports">我的举报</a></div></div>
+      <div class="card"><span class="card__tag">wk-Admin</span><h2>后台管理端</h2>
+        <p>复刻 /bbs/admin/*：数据概览、帖子管理、用户管理、部门管理、话题管理、高风险帖子与站外舆情。</p>
+        <ul><li>需要管理员身份（默认即为管理员）</li><li>处理结果实时同步到前台</li></ul>
+        <a class="go" href="pc.html#/bbs/admin/dashboard/index">打开管理端</a>
+        <div class="sub"><a href="pc.html#/bbs/admin/posts/index">帖子管理</a><a href="pc.html#/bbs/admin/risk-posts/index">高风险帖子</a><a href="pc.html#/bbs/admin/sentiment/external">站外舆情</a></div></div>
+    </div>
+    <div class="panel">
+      <h3>演示身份</h3>
+      <p>切换后三端同时生效。数据存放在浏览器 localStorage（键名 zndd_proto_db_v1），不连接任何线上接口。</p>
+      <div class="users" id="users"></div>
+      <div class="ops"><button id="reset">重置演示数据</button><span id="cur"></span></div>
+    </div>
+  </div>
+  <script src="js/store.js"></script>
+  <script>
+    function render() {
+      var me = Store.me();
+      document.getElementById('users').innerHTML = Store.DEMO_USERS.map(function (u) {
+        return '<button data-id="' + u.id + '" class="' + (u.id === me.id ? 'is-cur' : '') + '">' + u.label + '</button>';
+      }).join('');
+      document.getElementById('cur').textContent = '当前：' + me.nc + (me.role === 'admin' ? '（管理员）' : '');
+    }
+    document.getElementById('users').addEventListener('click', function (e) {
+      var b = e.target.closest('button[data-id]');
+      if (b) Store.setCurrentUser(b.dataset.id);
+    });
+    document.getElementById('reset').addEventListener('click', function () {
+      if (window.confirm('将清空所有本地修改并恢复初始演示数据，是否继续？')) Store.reset();
+    });
+    window.addEventListener('zndd:change', render);
+    render();
+  </script>
+</body>
+</html>

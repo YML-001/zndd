@@ -1,0 +1,30 @@
+<svg preserveAspectRatio="none" width="100%" height="100%" overflow="visible" style="display: block;" viewBox="0 0 30 30" fill="none" xmlns="http://www.w3.org/2000/svg">
+<g id="money">
+<path id="Vector" d="M8.75 25.625C5 25.625 2.5 23.75 2.5 19.375V10.625C2.5 6.25 5 4.375 8.75 4.375H21.25C25 4.375 27.5 6.25 27.5 10.625V19.375C27.5 23.75 25 25.625 21.25 25.625H8.75Z" fill="url(#paint0_radial_0_264)" stroke="url(#paint1_linear_0_264)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+<path id="Vector_2" fill-rule="evenodd" clip-rule="evenodd" d="M14.75 16.5C12.6789 16.5 11 14.8211 11 12.75C11 10.6789 12.6789 9 14.75 9C16.8211 9 18.5 10.6789 18.5 12.75C18.5 14.8211 16.8211 16.5 14.75 16.5Z" stroke="url(#paint2_linear_0_264)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+<g id="Vector_3">
+<path fill-rule="evenodd" clip-rule="evenodd" d="M21 20.75L17.6686 19.6622C15.8534 19.0695 13.8966 19.0695 12.0814 19.6622L8.75 20.75" fill="url(#paint3_radial_0_264)"/>
+<path d="M21 20.75L17.6686 19.6622C15.8534 19.0695 13.8966 19.0695 12.0814 19.6622L8.75 20.75" stroke="var(--stroke-0, #FFADD8)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+</g>
+<g id="Vector_4" opacity="0.01">
+</g>
+</g>
+<defs>
+<radialGradient id="paint0_radial_0_264" cx="0" cy="0" r="1" gradientTransform="matrix(-20.5896 21.6945 -23.8763 -17.8983 22.7381 3.51834)" gradientUnits="userSpaceOnUse">
+<stop stop-color="#FF0051"/>
+<stop offset="0.821784" stop-color="#FF425E" stop-opacity="0"/>
+</radialGradient>
+<linearGradient id="paint1_linear_0_264" x1="15" y1="4.375" x2="15" y2="25.625" gradientUnits="userSpaceOnUse">
+<stop stop-color="white"/>
+<stop offset="1" stop-color="#FFA0D2"/>
+</linearGradient>
+<linearGradient id="paint2_linear_0_264" x1="14.75" y1="9" x2="14.75" y2="16.5" gradientUnits="userSpaceOnUse">
+<stop stop-color="white"/>
+<stop offset="1" stop-color="#FFA0D2"/>
+</linearGradient>
+<radialGradient id="paint3_radial_0_264" cx="0" cy="0" r="1" gradientTransform="matrix(-10.2773 -0.634921 4.11092 -1.5873 21.4938 20.369)" gradientUnits="userSpaceOnUse">
+<stop stop-color="#ABB0BA"/>
+<stop offset="0.821784" stop-color="white" stop-opacity="0"/>
+</radialGradient>
+</defs>
+</svg>
