@@ -60,7 +60,7 @@
     <div><h1>中南点点</h1><p>演示入口</p></div>
   </header>
   <main class="wrap">
-    <p class="lead">点角色端口会以该身份打开。<span>三端共用本机演示数据。</span></p>
+    <p class="lead">点角色端口会以该身份打开对应首页。<span>三端共用本机演示数据。到首页后再自己点进失物或后台。</span></p>
     <div class="roles" id="roles"></div>
     <div class="foot"><button type="button" id="reset">重置演示数据</button><span>恢复初始演示数据，已在浏览器里改过的内容会清掉。</span></div>
   </main>
@@ -71,43 +71,42 @@
         id: 'u101', role: '普通学生',
         fit: '适合看认领进度、自己的寻物，以及同学发来的线索。她发布了寻物「白色耳机盒」，也提交过认领申请。',
         ports: [
-          { port: 'h5-lost', label: '移动端 · 失物招领', primary: true },
-          { port: 'pc-lost', label: 'PC 前台 · 失物招领' }
+          { port: 'h5', label: '移动端 · 首页', primary: true },
+          { port: 'pc', label: 'PC 前台 · 首页' }
         ]
       },
       {
         id: 'u103', role: '普通学生',
-        fit: '适合演示给别人的寻物提供线索。端口会打开林知夏发布的寻物「白色耳机盒」。',
+        fit: '适合演示给别人的寻物提供线索。从首页进入失物招领，可以找到林知夏发布的寻物「白色耳机盒」。',
         ports: [
-          { port: 'h5-clue', label: '移动端 · 白色耳机盒', primary: true },
-          { port: 'pc-clue', label: 'PC 前台 · 白色耳机盒' }
+          { port: 'h5', label: '移动端 · 首页', primary: true },
+          { port: 'pc', label: 'PC 前台 · 首页' }
         ]
       },
       {
         id: 'u_zz1', role: '资助团队 · 登记 + 核对',
         fit: '可以登记物品，也可以核对称认领、安排交接。负责校本部、铁道校区、湘雅校区、天心校区、毓秀楼、雷锋岗。管理端侧栏只有「失物招领」。',
         ports: [
-          { port: 'h5-work', label: '移动端 · 招领工作台' },
-          { port: 'pc-lost', label: 'PC 前台 · 失物招领' },
-          { port: 'pc-items', label: 'PC 管理端 · 失物台账', primary: true }
+          { port: 'h5', label: '移动端 · 首页' },
+          { port: 'pc', label: 'PC 前台 · 首页' },
+          { port: 'admin', label: 'PC 管理端 · 首页', primary: true }
         ]
       },
       {
         id: 'u_zz2', role: '资助团队 · 仅新校区登记',
         fit: '只能登记新校区服务点的物品，不能核对称认领。管理端台账只显示新校区服务点保管的物品。',
         ports: [
-          { port: 'h5-work', label: '移动端 · 招领工作台' },
-          { port: 'pc-lost', label: 'PC 前台 · 失物招领' },
-          { port: 'pc-items', label: 'PC 管理端 · 失物台账', primary: true }
+          { port: 'h5', label: '移动端 · 首页' },
+          { port: 'pc', label: 'PC 前台 · 首页' },
+          { port: 'admin', label: 'PC 管理端 · 首页', primary: true }
         ]
       },
       {
         id: 'u_admin', role: '超级管理员', wide: true,
         fit: '可以进入全部后台，包括用户管理和「失物招领」。前台用来对照学生看到的页面。',
         ports: [
-          { port: 'pc-users', label: 'PC 管理端 · 用户管理', primary: true },
-          { port: 'pc-items', label: 'PC 管理端 · 失物招领' },
-          { port: 'pc-home', label: 'PC 前台' }
+          { port: 'admin', label: 'PC 管理端 · 首页', primary: true },
+          { port: 'pc', label: 'PC 前台 · 首页' }
         ]
       }
     ];
@@ -117,21 +116,10 @@
         return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
       });
     }
-    function earId() {
-      var list = (Store.db && Store.db.lfItems) || [];
-      var it = list.find(function (x) { return x.lx === 'lost' && x.mc === '白色耳机盒'; });
-      return it ? it.id : '';
-    }
     function dest(port) {
-      var id = earId();
-      if (port === 'h5-lost') return 'h5.html#/ywViews/bbs/lost/index';
-      if (port === 'pc-lost') return 'pc.html#/bbs/lost/index';
-      if (port === 'pc-home') return 'pc.html#/bbs/home/index';
-      if (port === 'h5-work') return 'h5.html#/ywViews/bbs/lost/work';
-      if (port === 'pc-items') return 'pc.html#/bbs/admin/lost/items';
-      if (port === 'pc-users') return 'pc.html#/bbs/admin/users/index';
-      if (port === 'h5-clue') return id ? 'h5.html#/ywViews/bbs/lost/detail?id=' + encodeURIComponent(id) : 'h5.html#/ywViews/bbs/lost/index?lx=lost';
-      if (port === 'pc-clue') return id ? 'pc.html#/bbs/lost/index?lx=lost&id=' + encodeURIComponent(id) : 'pc.html#/bbs/lost/index?lx=lost';
+      if (port === 'h5') return 'h5.html#/ywViews/bbs/home/index';
+      if (port === 'pc') return 'pc.html#/bbs/home/index';
+      if (port === 'admin') return 'pc.html#/bbs/admin/dashboard/index';
       return 'index.html';
     }
     function render() {
