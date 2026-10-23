@@ -31,6 +31,33 @@
     2: ['打架', '威胁', '诈骗', '抑郁', '霸凌', '报复', '偷拍'],
     3: ['投诉', '曝光', '维权', '黑幕', '集体', '退钱']
   };
+  /* 失物招领 */
+  const LF_XQ = ['校本部', '南校区', '新校区', '铁道校区', '湘雅校区', '天心校区', '杏林校区', '开福校区'];
+  const LF_XQ_ALIAS = { 本部: '校本部', 南校: '南校区', 新校: '新校区', 铁道: '铁道校区', 湘雅: '湘雅校区', 天心: '天心校区', 杏林: '杏林校区', 开福: '开福校区' };
+  const LF_FL = [
+    { value: 'campuscard', label: '校园卡' },
+    { value: 'idcard', label: '其他证件卡片' },
+    { value: 'digital', label: '数码产品' },
+    { value: 'daily', label: '生活用品' },
+    { value: 'other', label: '其他' }
+  ];
+  const LF_FL_MAP = Object.fromEntries(LF_FL.map(x => [x.value, x]));
+  const LF_ZT = {
+    pending: { label: '待认领', tone: 'blue' }, checking: { label: '核对中', tone: 'orange' }, returned: { label: '已归还', tone: 'green' },
+    seeking: { label: '寻找中', tone: 'orange' }, found: { label: '已找回', tone: 'green' }, withdrawn: { label: '已撤回', tone: 'gray' },
+    expired: { label: '因时间久远已处理', tone: 'gray' }
+  };
+  const LF_CLAIM_ZT = {
+    pending: { label: '待核对', tone: 'blue' }, more: { label: '待补充', tone: 'orange' }, pass: { label: '通过', tone: 'green' },
+    reject: { label: '未通过', tone: 'gray' }, done: { label: '已完成', tone: 'green' }
+  };
+  const LF_ROLES = {
+    register: { label: '登记成员', desc: '登记与编辑负责服务点的物品', scope: '负责服务点的物品信息' },
+    checker: { label: '核对成员', desc: '处理授权的认领申请与交接归还', scope: '所处理申请的核验材料' },
+    admin: { label: '管理员', desc: '配置服务点、成员、异常处理', scope: '按业务职责管理相关记录' }
+  };
+  const LF_DAYS = [{ value: 0, label: '不限' }, { value: 1, label: '今天' }, { value: 3, label: '近 3 天' }, { value: 7, label: '近 7 天' }, { value: 30, label: '近 30 天' }];
+  const LF_EXPIRE = 730 * DAY;
   const NICK_A = ['快乐的', '安静的', '奔跑的', '发光的', '爱吃饭的', '早起的', '迷路的', '认真的', '佛系的', '热心的'];
   const NICK_B = ['小麓', '岳麓山', '湘江风', '樱花', '桂花糕', '橘子洲', '升华楼', '图书馆猫', '北三门', '南校区'];
 
@@ -231,8 +258,132 @@
       { id: uid('xx_'), uid: 'u_admin', type: 'system', text: '你举报的帖子已处理：经核实未违规，予以保留', tzid: posts[7].id, cjsj: ago(3, 20), read: true }
     ];
     const interventions = [];
+
+    /* 失物招领：资助团队成员、服务点、物品、认领、汇总 */
+    [['u_zz1', '资助团队·周同学', '周以宁', '#3087CC'], ['u_zz2', '资助团队·许同学', '许嘉禾', '#469FFF']].forEach(([id, nc, xm, c], i) => {
+      users.push({
+        id, nc, tx: 'color:' + c, xm, xh: '82241' + pad(60 + i) + '0' + (300 + i), dlzh: '82241' + pad(60 + i) + '0' + (300 + i), bmmc: '学生资助服务中心', nj: '2024级',
+        sjhm: '1387310' + pad(60 + i) + '00', jsr: 'student', role: 'student', sfgf: '0', rzbmid: '', fjzt: '0', sfwczl: '1', ncChangeRemain: 3, cjsj: ago(40),
+        fdy: '刘老师', fdydh: '15173100088', bds: '—', bdsdh: '—'
+      });
+    });
+    const lfPoints = [
+      { id: 'lp1', mc: '校本部服务点', xq: '校本部', dz: '校本部学生活动中心一楼 资助团队值班室', zbap: '周一至周五 12:00-14:00、17:30-19:30', lxfs: '站内私信或值班电话 0731-88830001', lstz: '', fzr: 'u_zz1', px: 1 },
+      { id: 'lp2', mc: '新校区服务点', xq: '新校区', dz: '新校区图书馆负一楼 学生服务台', zbap: '周一至周五 12:00-14:00、17:30-19:30', lxfs: '站内私信或值班电话 0731-88830002', lstz: '本周五下午值班暂停，周六 10:00 恢复', fzr: 'u_zz2', px: 2 },
+      { id: 'lp3', mc: '铁道校区服务点', xq: '铁道校区', dz: '铁道校区学生事务中心 102 室', zbap: '周二、周四 12:00-14:00', lxfs: '站内私信', lstz: '', fzr: 'u_zz1', px: 3 },
+      { id: 'lp4', mc: '湘雅校区服务点', xq: '湘雅校区', dz: '湘雅校区学生活动中心一楼', zbap: '周一、周三、周五 12:00-14:00', lxfs: '站内私信', lstz: '', fzr: 'u_zz1', px: 4 },
+      { id: 'lp5', mc: '天心校区服务点', xq: '天心校区', dz: '天心校区图书馆一楼服务台', zbap: '周一至周五 17:30-19:30', lxfs: '站内私信', lstz: '', fzr: 'u_zz1', px: 5 },
+      { id: 'lp6', mc: '毓秀楼服务点', xq: '', dz: '', zbap: '待团队确认', lxfs: '站内私信', lstz: '', fzr: 'u_zz1', px: 6 },
+      { id: 'lp7', mc: '雷锋岗服务点', xq: '', dz: '', zbap: '待团队确认', lxfs: '站内私信', lstz: '', fzr: 'u_zz1', px: 7 }
+    ];
+    const lfMembers = [
+      { uid: 'u_zz1', roles: ['register', 'checker'], points: ['lp1', 'lp3', 'lp4', 'lp5', 'lp6', 'lp7'], cjsj: ago(40) },
+      { uid: 'u_zz2', roles: ['register'], points: ['lp2'], cjsj: ago(30) }
+    ];
+    const today = startOfDay(t0);
+    const at = (d, h, m = 0) => Math.min(t0 - 60000 * (h + 1), today - d * DAY + h * HOUR + m * 60000);
+    const lfSeq = {};
+    const lfItems = [];
+    const lfItem = o => {
+      const day = fmtDate(o.fbsj).replace(/-/g, '');
+      const pre = (o.lx === 'lost' ? 'XW' : 'SW') + day;
+      lfSeq[pre] = (lfSeq[pre] || 0) + 1;
+      const team = o.ly === 'team';
+      const it = Object.assign({
+        id: uid('lf_'), bh: pre + String(lfSeq[pre]).padStart(3, '0'), lx: 'found', sjsm: '', nr: '', tps: [], ly: 'student',
+        bgfs: o.lx === 'lost' ? '' : team ? 'point' : 'self', bgdid: '', zt: o.lx === 'lost' ? 'seeking' : 'pending', card: null, cxyy: ''
+      }, o);
+      it.sj = it.sj || it.fbsj;
+      it.gxsj = it.gxsj || it.fbsj;
+      it.logs = [{ t: it.fbsj, act: '登记', uid: it.fbrid, note: team ? '团队登记' : '同学发布' }].concat(o.logs || []);
+      lfItems.push(it);
+      return it;
+    };
+    const f1 = lfItem({ fl: 'digital', mc: '白色蓝牙耳机盒', xq: '新校区', dd: '图书馆三楼自习区', fbsj: at(0, 9, 20), sj: at(0, 8), sjsm: '上午', nr: '带透明保护套，外壳有轻微划痕。', tps: ['ph:6:耳机盒'], ly: 'team', fbrid: 'u_zz2', bgdid: 'lp2' });
+    const f2 = lfItem({ fl: 'campuscard', mc: '校园卡 · 王*墨', xq: '校本部', dd: '升华楼 A 座教室', fbsj: at(0, 9, 40), sjsm: '上午', nr: '冶金与环境学院', tps: ['ph:3:校园卡'], ly: 'team', fbrid: 'u_zz1', bgdid: 'lp1', card: { xm: '王子墨', xh: '8225130103', xy: '冶金与环境学院' } });
+    const f3 = lfItem({ fl: 'daily', mc: '黑色折叠伞', xq: '校本部', dd: '二食堂门口', fbsj: at(0, 10), sjsm: '中午', nr: '伞柄处挂有一个小熊挂件。', tps: ['ph:5:雨伞'], ly: 'team', fbrid: 'u_zz1', bgdid: 'lp1' });
+    const f4 = lfItem({ fl: 'daily', mc: '蓝色保温杯', xq: '新校区', dd: '体育馆看台', fbsj: at(1, 18), sjsm: '傍晚', nr: '杯身有贴纸。', tps: ['ph:1:保温杯'], ly: 'team', fbrid: 'u_zz2', bgdid: 'lp2' });
+    const f5 = lfItem({ fl: 'idcard', mc: '身份证 · 李*河', xq: '铁道校区', dd: '教学楼 B 座一楼', fbsj: at(1, 17), nr: '证件号码已遮挡，领取时请携带校园卡核对。', tps: [], ly: 'team', fbrid: 'u_zz1', bgdid: 'lp3', card: { xm: '李星河', xh: '', xy: '' } });
+    const f6 = lfItem({ fl: 'digital', mc: 'AirPods 充电盒', xq: '天心校区', dd: '天心校区图书馆二楼', fbsj: at(3, 12), sjsm: '中午', nr: '白色，盒盖内侧有刻字。', tps: ['ph:2:充电盒'], ly: 'team', fbrid: 'u_zz1', bgdid: 'lp5', zt: 'checking' });
+    const f7 = lfItem({ fl: 'campuscard', mc: '校园卡 · 赵*鸣', xq: '校本部', dd: '毓秀楼一楼大厅', fbsj: at(5, 11), nr: '建筑与艺术学院', tps: ['ph:3:校园卡'], ly: 'team', fbrid: 'u_zz1', bgdid: 'lp6', zt: 'returned', card: { xm: '赵一鸣', xh: '8223150105', xy: '建筑与艺术学院' }, gxsj: at(4, 13), logs: [{ t: at(4, 13), act: '完成归还', uid: 'u_zz1', note: '按认领申请交接完成' }] });
+    lfItem({ fl: 'other', mc: '英语四级真题书', xq: '湘雅校区', dd: '湘雅校区教学楼 302', fbsj: at(12, 15), nr: '书内写有铅笔批注。', tps: ['ph:7:真题书'], ly: 'team', fbrid: 'u_zz1', bgdid: 'lp4' });
+    lfItem({ fl: 'daily', mc: '灰色双肩包', xq: '校本部', dd: '新民路运动场', fbsj: ago(790), nr: '包内有一本笔记本。', tps: ['ph:8:双肩包'], ly: 'team', fbrid: 'u_zz1', bgdid: 'lp1' });
+    lfItem({ fl: 'digital', mc: '粉色手机壳（iPhone）', xq: '南校区', dd: '南校区食堂二楼', fbsj: at(1, 13), sjsm: '中午', nr: '在靠窗的座位上捡到，我先代为保管，可私信我。', tps: ['ph:4:手机壳'], fbrid: 'u102' });
+    lfItem({ fl: 'campuscard', mc: '校园卡 · 冯*航', xq: '校本部', dd: '图书馆三楼', fbsj: at(3, 16), nr: '文学院', tps: ['ph:3:校园卡'], fbrid: 'u106', bgfs: 'point', bgdid: 'lp1', card: { xm: '冯启航', xh: '8223190109', xy: '文学院' }, logs: [{ t: at(3, 18), act: '转交服务点', uid: 'u106', note: '发布同学保管 → 校本部服务点' }] });
+    const f12 = lfItem({ fl: 'digital', mc: '银色 U 盘 64G', xq: '开福校区', dd: '开福校区教学楼一楼', fbsj: at(2, 10), nr: 'U 盘上挂有红色挂绳。', tps: ['ph:9:U盘'], fbrid: 'u105' });
+    const l1 = lfItem({ lx: 'lost', fl: 'digital', mc: '白色耳机盒', xq: '新校区', dd: '图书馆到食堂之间', fbsj: at(0, 13), sj: at(0, 12), sjsm: '12 时至 14 时', nr: '可能在图书馆至食堂的路上遗失，外有透明保护套。', tps: ['ph:6:耳机'], fbrid: 'u101' });
+    lfItem({ lx: 'lost', fl: 'daily', mc: '黑色长柄雨伞', xq: '校本部', dd: '升华楼至二食堂', fbsj: at(1, 19), sjsm: '晚上', nr: '伞面有白色波点。', tps: [], fbrid: 'u108' });
+    lfItem({ lx: 'lost', fl: 'idcard', mc: '学生证', xq: '铁道校区', dd: '铁道校区图书馆', fbsj: at(4, 9), sjsm: '上午', nr: '学生证夹在蓝色卡套里。', tps: [], fbrid: 'u110' });
+    lfItem({ lx: 'lost', fl: 'daily', mc: '蓝色水杯', xq: '新校区', dd: '新校区一食堂', fbsj: at(6, 12), nr: '已经找到了，谢谢大家。', tps: ['ph:1:水杯'], fbrid: 'u112', zt: 'found' });
+    lfItem({ fl: 'other', mc: '一串宿舍钥匙', xq: '校本部', dd: '二舍门口台阶', fbsj: at(42, 15), sjsm: '下午', nr: '钥匙扣上挂着一块黄色门禁牌，背面写着「12 栋」。在服务点放了一个多月，还没人来领。', tps: ['ph:10:钥匙'], ly: 'team', fbrid: 'u_zz1', bgdid: 'lp1' });
+    lfItem({ fl: 'daily', mc: '透明近视眼镜盒', xq: '校本部', dd: '逸夫楼 201 教室', fbsj: at(6, 12), sjsm: '中午', nr: '盒盖内侧贴着一张手写课程表。', tps: ['ph:11:眼镜盒'], ly: 'team', fbrid: 'u_zz1', bgdid: 'lp1', zt: 'withdrawn', cxyy: '失主当晚到服务点直接取回了，和当场归还的记录重复，先撤回。', gxsj: at(6, 18), logs: [{ t: at(6, 18), act: '撤回', uid: 'u_zz1', note: '失主当晚到服务点直接取回了，和当场归还的记录重复，先撤回。' }] });
+    const fKb = lfItem({ fl: 'digital', mc: '银色机械键盘', xq: '铁道校区', dd: '学生事务中心门口长椅', fbsj: at(2, 11), sjsm: '上午', nr: '87 键，空格键右侧有一小块掉漆。', tps: ['ph:12:键盘'], ly: 'team', fbrid: 'u_zz1', bgdid: 'lp3', zt: 'checking', gxsj: at(1, 16), logs: [{ t: at(1, 16), act: '进入核对', uid: 'u_zz1', note: '认领申请核对通过' }] });
+    const fBag = lfItem({ fl: 'daily', mc: '深蓝色双肩包', xq: '湘雅校区', dd: '湘雅校区图书馆一楼大厅', fbsj: at(4, 15), sjsm: '下午', nr: '前袋装着一本专业课笔记，封面写了姓名。', tps: ['ph:13:双肩包'], ly: 'team', fbrid: 'u_zz1', bgdid: 'lp4', zt: 'checking', gxsj: at(2, 11), logs: [{ t: at(3, 11), act: '进入核对', uid: 'u_zz1', note: '认领申请核对通过' }] });
+    const fEar = lfItem({ fl: 'digital', mc: '灰色有线耳机', xq: '校本部', dd: '中南讲堂后排座位', fbsj: at(9, 18), sjsm: '晚上', nr: '线材是灰色的，线上有一个小麦克风。', tps: ['ph:14:有线耳机'], ly: 'team', fbrid: 'u_zz1', bgdid: 'lp1', gxsj: at(8, 10) });
+    const fCup = lfItem({ fl: 'daily', mc: '绿色运动水杯', xq: '天心校区', dd: '天心校区操场看台', fbsj: at(11, 10), sjsm: '上午', nr: '杯身是磨砂的，盖子是深绿色。', tps: ['ph:15:水杯'], ly: 'team', fbrid: 'u_zz1', bgdid: 'lp5', zt: 'returned', gxsj: at(7, 18), logs: [{ t: at(7, 18), act: '完成归还', uid: 'u_zz1', note: '按认领申请交接完成' }] });
+    const uSun = users.find(u => u.id === 'u107');
+    const fCard = lfItem({ fl: 'campuscard', mc: '校园卡 · 孙*溪', xq: '新校区', dd: '新校区二食堂靠窗座位', fbsj: at(4, 9), sjsm: '上午', nr: uSun.bmmc, tps: ['ph:3:校园卡'], ly: 'team', fbrid: 'u_zz2', bgdid: 'lp2', card: { xm: uSun.xm, xh: uSun.xh, xy: uSun.bmmc } });
+    const uHe = users.find(u => u.id === 'u111');
+    const fStu = lfItem({ fl: 'idcard', mc: '学生证 · 何*言', xq: '湘雅校区', dd: '湘雅校区学生活动中心值班台', fbsj: at(7, 14), sjsm: '下午', nr: '证件套是深蓝色的，内页有钢印。', tps: ['ph:16:学生证'], ly: 'team', fbrid: 'u_zz1', bgdid: 'lp4', card: { xm: uHe.xm, xh: uHe.xh, xy: uHe.bmmc }, gxsj: at(6, 12) });
+    const fTote = lfItem({ fl: 'daily', mc: '米色帆布袋', xq: '杏林校区', dd: '杏林校区教学楼走廊座椅', fbsj: at(1, 15), sjsm: '下午', nr: '袋子侧面有一枚橘子洲头的徽章，我先放宿舍保管，对上特征可以来取。', tps: ['ph:17:帆布袋'], fbrid: 'u101' });
+    const fGog = lfItem({ fl: 'daily', mc: '白色实验护目镜', xq: '铁道校区', dd: '铁道校区实验楼一楼大厅', fbsj: at(8, 10), sjsm: '上午', nr: '镜腿上用油性笔写了「材加」。', tps: ['ph:18:护目镜'], ly: 'team', fbrid: 'u_zz1', bgdid: 'lp3' });
+    const fPow = lfItem({ fl: 'digital', mc: '粉色充电宝', xq: '湘雅校区', dd: '湘雅校区教学楼 201', fbsj: at(8, 16), sjsm: '下午', nr: '一万毫安，背面有一道浅划痕。', tps: ['ph:19:充电宝'], ly: 'team', fbrid: 'u_zz1', bgdid: 'lp4' });
+    lfItem({ lx: 'lost', fl: 'campuscard', mc: '校园卡', xq: '湘雅校区', dd: '湘雅校区门诊到教学楼之间', fbsj: at(2, 8), sjsm: '上午', nr: '透明卡套，里面还夹着一张疫苗接种卡。', tps: ['ph:3:卡套'], fbrid: 'u104' });
+    lfItem({ lx: 'lost', fl: 'daily', mc: '黑色拉链钱包', xq: '天心校区', dd: '天心校区食堂到宿舍的路上', fbsj: at(1, 20), sjsm: '晚上', nr: '里面有食堂饭卡和两张照片，拉链头是银色的。', tps: [], fbrid: 'u106' });
+    lfItem({ lx: 'lost', fl: 'other', mc: '实验室门禁卡', xq: '南校区', dd: '南校区实验楼门厅', fbsj: at(3, 9), sjsm: '上午', nr: '白色卡片，左上角贴了一小块蓝色胶带。', tps: ['ph:20:门禁卡'], fbrid: 'u111' });
+    lfItem({ lx: 'lost', fl: 'digital', mc: '平板触控笔', xq: '杏林校区', dd: '杏林校区图书馆二楼靠窗', fbsj: at(2, 16), sjsm: '下午', nr: '笔帽上有一圈磨白，可能落在靠窗那排。', tps: [], fbrid: 'u103' });
+    lfItem({ lx: 'lost', fl: 'daily', mc: '灰色针织帽', xq: '校本部', dd: '岳麓山登山道', fbsj: at(10, 9), sjsm: '上午', nr: '已经在一起爬山的同学那里找到了。', tps: ['ph:21:针织帽'], fbrid: 'u101', zt: 'found', gxsj: at(9, 20), logs: [{ t: at(9, 20), act: '标记已找回', uid: 'u101' }] });
+    lfItem({ lx: 'lost', fl: 'daily', mc: '条纹围巾', xq: '校本部', dd: '二食堂门口', fbsj: at(8, 13), nr: '下午去食堂失物处领回来了，谢谢帮我留意的同学。', tps: [], fbrid: 'u109', zt: 'found', gxsj: at(7, 12), logs: [{ t: at(7, 12), act: '标记已找回', uid: 'u109' }] });
+    const lfClaims = [
+      { id: uid('rl_'), itemId: f1.id, sqrid: 'u101', tz: '耳机盒背面贴了一张小猫贴纸。', sjdd: '今天中午 12 点左右在图书馆三楼自习', tps: [], zt: 'more', bcyq: '请补充保护套上的特殊标记，或提供耳机连接手机的截图。', jl: '', clr: 'u_zz2', jj: null, cjsj: at(0, 13, 30), gxsj: at(0, 14), logs: [{ t: at(0, 13, 30), act: '提交申请', uid: 'u101' }, { t: at(0, 14), act: '要求补充材料', uid: 'u_zz2', note: '请补充保护套上的特殊标记，或提供耳机连接手机的截图。' }] },
+      { id: uid('rl_'), itemId: f2.id, sqrid: 'u104', tz: '卡套是蓝色的，卡面左下角有磨损。', sjdd: '今天上午在升华楼 A 座上课', tps: [], zt: 'pending', bcyq: '', jl: '', clr: '', jj: null, cjsj: at(0, 11), gxsj: at(0, 11), logs: [{ t: at(0, 11), act: '提交申请', uid: 'u104' }] },
+      { id: uid('rl_'), itemId: f6.id, sqrid: 'u107', tz: '盒盖内侧刻有 “WJS”。', sjdd: '三天前中午在图书馆二楼', tps: ['ph:2:购买记录'], zt: 'pass', bcyq: '', jl: '刻字与登记信息一致', clr: 'u_zz1', jj: { dd: '天心校区服务点（天心校区图书馆一楼服务台）', sj: '明天 17:30-19:30', t: at(2, 10) }, cjsj: at(3, 15), gxsj: at(2, 10), logs: [{ t: at(3, 15), act: '提交申请', uid: 'u107' }, { t: at(2, 9), act: '核对通过', uid: 'u_zz1', note: '刻字与登记信息一致' }, { t: at(2, 10), act: '安排交接', uid: 'u_zz1' }] },
+      { id: uid('rl_'), itemId: f7.id, sqrid: 'u106', tz: '本人校园卡', sjdd: '在毓秀楼自习时遗失', tps: [], zt: 'done', bcyq: '', jl: '本人持证领取', clr: 'u_zz1', jj: { dd: '毓秀楼服务点', sj: '当天 12:00-14:00', t: at(4, 12) }, cjsj: at(5, 12), gxsj: at(4, 13), logs: [{ t: at(5, 12), act: '提交申请', uid: 'u106' }, { t: at(4, 12), act: '核对通过', uid: 'u_zz1' }, { t: at(4, 13), act: '完成归还', uid: 'u_zz1' }] },
+      { id: uid('rl_'), itemId: f12.id, sqrid: 'u101', tz: 'U 盘里有一个“毕业设计”文件夹，红色挂绳上有一个铃铛。', sjdd: '前天上午在开福校区教学楼', tps: [], zt: 'pending', bcyq: '', jl: '', clr: '', jj: null, cjsj: at(1, 9), gxsj: at(1, 9), logs: [{ t: at(1, 9), act: '提交申请', uid: 'u101' }] },
+      { id: uid('rl_'), itemId: fKb.id, sqrid: 'u109', tz: '空格键右边那颗键掉了一小块漆，键盘是银色铝合金的。', sjdd: '前天上午在铁道学生事务中心等材料', tps: ['ph:12:掉漆'], zt: 'pass', bcyq: '', jl: '掉漆位置和登记时拍的照片对得上', clr: 'u_zz1', jj: null, cjsj: at(2, 14), gxsj: at(1, 16), logs: [{ t: at(2, 14), act: '提交申请', uid: 'u109' }, { t: at(1, 16), act: '核对通过', uid: 'u_zz1', note: '掉漆位置和登记时拍的照片对得上' }] },
+      { id: uid('rl_'), itemId: fBag.id, sqrid: 'u101', tz: '前袋笔记封面写着林知夏，内侧有一张升华楼的贴纸。', sjdd: '四天前下午在湘雅图书馆一楼占座', tps: ['ph:13:笔记'], zt: 'pass', bcyq: '', jl: '笔记封面姓名与认领人一致', clr: 'u_zz1', jj: { dd: '湘雅校区服务点（湘雅校区学生活动中心一楼）', sj: '本周三 12:00-14:00', lxfs: '站内私信或值班电话 0731-88830001', t: at(2, 11) }, cjsj: at(4, 18), gxsj: at(2, 11), logs: [{ t: at(4, 18), act: '提交申请', uid: 'u101' }, { t: at(3, 11), act: '核对通过', uid: 'u_zz1', note: '笔记封面姓名与认领人一致' }, { t: at(2, 11), act: '安排交接', uid: 'u_zz1', note: '湘雅校区服务点（湘雅校区学生活动中心一楼） · 本周三 12:00-14:00' }] },
+      { id: uid('rl_'), itemId: fEar.id, sqrid: 'u101', tz: '耳机是白色的，线很短。', sjdd: '上周在中南讲堂上晚课', tps: [], zt: 'reject', bcyq: '', jl: '实物线材是灰色的，和描述的白色线对不上', clr: 'u_zz1', jj: null, cjsj: at(9, 19), gxsj: at(8, 10), logs: [{ t: at(9, 19), act: '提交申请', uid: 'u101' }, { t: at(8, 10), act: '核对未通过', uid: 'u_zz1', note: '实物线材是灰色的，和描述的白色线对不上' }] },
+      { id: uid('rl_'), itemId: fCup.id, sqrid: 'u101', tz: '杯盖内侧刻了 LZX，杯身有一道被钥匙划的印。', sjdd: '上上周上午在天心操场跑步', tps: [], zt: 'done', bcyq: '', jl: '刻字和划痕都对得上，本人领取', clr: 'u_zz1', jj: { dd: '天心校区服务点（天心校区图书馆一楼服务台）', sj: '当天 17:30-19:30', t: at(9, 11) }, cjsj: at(11, 12), gxsj: at(7, 18), logs: [{ t: at(11, 12), act: '提交申请', uid: 'u101' }, { t: at(10, 15), act: '核对通过', uid: 'u_zz1', note: '刻字和划痕都对得上' }, { t: at(9, 11), act: '安排交接', uid: 'u_zz1' }, { t: at(7, 18), act: '完成归还', uid: 'u_zz1', note: '按认领申请交接完成' }] },
+      { id: uid('rl_'), itemId: fCard.id, sqrid: 'u107', tz: '卡面左上角有一道折痕，卡套里夹着饭卡。', sjdd: '四天前早饭在新校区二食堂', tps: [], zt: 'pending', bcyq: '', jl: '', clr: '', jj: null, cjsj: at(4, 12), gxsj: at(4, 12), logs: [{ t: at(4, 12), act: '提交申请', uid: 'u107' }] },
+      { id: uid('rl_'), itemId: fStu.id, sqrid: 'u111', tz: '学生证照片是我，钢印在内页右下角。', sjdd: '上周在湘雅学生活动中心办活动', tps: ['ph:16:证件内页'], zt: 'more', bcyq: '请再补一张学生证封面和钢印的清晰照片，方便和原件对一下。', jl: '', clr: 'u_zz1', jj: null, cjsj: at(7, 17), gxsj: at(6, 12), logs: [{ t: at(7, 17), act: '提交申请', uid: 'u111' }, { t: at(6, 12), act: '要求补充材料', uid: 'u_zz1', note: '请再补一张学生证封面和钢印的清晰照片，方便和原件对一下。' }] },
+      { id: uid('rl_'), itemId: fTote.id, sqrid: 'u108', tz: '徽章是橘子洲头的剪影，袋子内袋有一张打印的实验报告。', sjdd: '昨天下午在杏林教学楼等同学', tps: [], zt: 'pending', bcyq: '', jl: '', clr: '', jj: null, cjsj: at(0, 11), gxsj: at(0, 11), logs: [{ t: at(0, 11), act: '提交申请', uid: 'u108' }] }
+    ];
+    const lfClues = [
+      { id: uid('xs_'), itemId: l1.id, uid: 'u109', dd: '新校区图书馆三楼', sj: '今天中午', nr: '看到有人把一个白色耳机盒交给了值班同学，可以去新校区服务点问问。', tps: [], cjsj: at(0, 13, 40) },
+      { id: uid('xs_'), itemId: l1.id, uid: 'u102', dd: '新校区食堂门口', sj: '昨天下午', nr: '临时失物架上没看到耳机盒，更像是已经交到图书馆值班台了。', tps: [], cjsj: at(0, 15) },
+      { id: uid('xs_'), itemId: l1.id, uid: 'u104', dd: '图书馆三楼靠窗', sj: '今天中午', nr: '有同学问过是不是掉了白色耳机，你可以再去三楼服务台问一句。', tps: ['ph:6:自习区'], cjsj: at(0, 16) }
+    ];
+    const lfDigests = [
+      { id: uid('hz_'), rq: today, itemIds: [f1.id, f2.id, f3.id], zt: 'published', scr: 'u_zz1', qrr: 'u_zz1', qrsj: at(0, 10, 30), cjsj: at(0, 10, 20) },
+      { id: uid('hz_'), rq: today - DAY, itemIds: [f4.id, f5.id], zt: 'published', scr: 'u_zz1', qrr: 'u_zz1', qrsj: today - DAY + 20 * HOUR, cjsj: today - DAY + 20 * HOUR },
+      { id: uid('hz_'), rq: today - 3 * DAY, itemIds: [f6.id], zt: 'published', scr: 'u_zz1', qrr: 'u_zz1', qrsj: today - 3 * DAY + 20 * HOUR, cjsj: today - 3 * DAY + 20 * HOUR },
+      { id: uid('hz_'), rq: today - 5 * DAY, itemIds: [f7.id], zt: 'published', scr: 'u_zz1', qrr: 'u_zz1', qrsj: today - 5 * DAY + 20 * HOUR, cjsj: today - 5 * DAY + 20 * HOUR },
+      { id: uid('hz_'), rq: today - 8 * DAY, itemIds: [fGog.id, fPow.id], zt: 'draft', scr: 'u_zz1', qrr: '', qrsj: 0, cjsj: at(8, 19) }
+    ];
+    notices.push(
+      { id: uid('xx_'), uid: 'u101', type: 'lost', text: '你认领的「白色蓝牙耳机盒」需要补充材料：请补充保护套上的特殊标记，或提供耳机连接手机的截图。', fromId: 'u_zz2', lfid: f1.id, cjsj: at(0, 14), read: false },
+      { id: uid('xx_'), uid: 'u101', type: 'lost', text: '有同学为你的寻物「白色耳机盒」提供了线索', fromId: 'u109', lfid: l1.id, cjsj: at(0, 13, 40), read: false },
+      { id: uid('xx_'), uid: 'u_zz1', type: 'lost', text: '有新的认领申请待核对：校园卡 · 王*墨', fromId: 'u104', lfid: f2.id, cjsj: at(0, 11), read: false },
+      { id: uid('xx_'), uid: 'u101', type: 'lost', text: '你认领的「深蓝色双肩包」已核对通过，请于本周三 12:00-14:00 到湘雅校区服务点领取', fromId: 'u_zz1', lfid: fBag.id, cjsj: at(2, 11), read: false },
+      { id: uid('xx_'), uid: 'u101', type: 'lost', text: '你认领的「灰色有线耳机」未通过核对：实物线材是灰色的，和描述的白色线对不上', fromId: 'u_zz1', lfid: fEar.id, cjsj: at(8, 10), read: true },
+      { id: uid('xx_'), uid: 'u101', type: 'lost', text: '你认领的「绿色运动水杯」已完成归还', fromId: 'u_zz1', lfid: fCup.id, cjsj: at(7, 18), read: true },
+      { id: uid('xx_'), uid: 'u101', type: 'lost', text: '有同学为你的寻物「白色耳机盒」提供了线索', fromId: 'u102', lfid: l1.id, cjsj: at(0, 15), read: false },
+      { id: uid('xx_'), uid: 'u101', type: 'lost', text: '有同学为你的寻物「白色耳机盒」提供了线索', fromId: 'u104', lfid: l1.id, cjsj: at(0, 16), read: false },
+      { id: uid('xx_'), uid: 'u101', type: 'lost', text: '有新的认领申请待核对：米色帆布袋', fromId: 'u108', lfid: fTote.id, cjsj: at(0, 11), read: false },
+      { id: uid('xx_'), uid: 'u111', type: 'lost', text: '你认领的「学生证 · 何*言」需要补充材料：请再补一张学生证封面和钢印的清晰照片，方便和原件对一下。', fromId: 'u_zz1', lfid: fStu.id, cjsj: at(6, 12), read: false },
+      { id: uid('xx_'), uid: 'u_zz2', type: 'lost', text: '有新的认领申请待核对：校园卡 · 孙*溪', fromId: 'u107', lfid: fCard.id, cjsj: at(4, 12), read: false }
+    );
+    messages.push(
+      { id: uid('sx_'), fsrid: 'u109', jsrid: 'u101', nr: '【失物线索】关于你的「白色耳机盒」：中午在图书馆三楼看到有人把一个白色耳机盒交给了值班同学，可以去新校区服务点问问。', cjsj: at(0, 13, 40), sfyd: '0' },
+      { id: uid('sx_'), fsrid: 'u_zz1', jsrid: 'u107', nr: '【失物招领】你认领的「AirPods 充电盒」已核对通过，请按以下安排领取：\n地点：天心校区服务点（天心校区图书馆一楼服务台）\n时间：明天 17:30-19:30\n领取时请携带校园卡或有效证件。', cjsj: at(2, 10), sfyd: '1' },
+      { id: uid('sx_'), fsrid: 'u_zz1', jsrid: 'u101', nr: '【失物招领】你认领的「深蓝色双肩包」已核对通过，请按以下安排领取：\n地点：湘雅校区服务点（湘雅校区学生活动中心一楼）\n时间：本周三 12:00-14:00\n联系：站内私信或值班电话 0731-88830001\n领取时请携带校园卡或有效证件。', cjsj: at(2, 11), sfyd: '0' },
+      { id: uid('sx_'), fsrid: 'u102', jsrid: 'u101', nr: '【失物线索】关于你的「白色耳机盒」：昨天下午我在新校区食堂门口的临时失物架上没看到耳机盒，更像是已经交到图书馆值班台了。', cjsj: at(0, 15), sfyd: '0' },
+      { id: uid('sx_'), fsrid: 'u104', jsrid: 'u101', nr: '【失物线索】关于你的「白色耳机盒」：中午在图书馆三楼靠窗，有同学问过是不是掉了白色耳机，你可以再去三楼服务台问一句。', cjsj: at(0, 16), sfyd: '0' }
+    );
+
     return {
-      version: 1, currentUserId: 'u_admin', users, posts, comments, drafts, messages, reports, notices, depts, topics, interventions,
+      version: 4, currentUserId: 'u_admin', users, posts, comments, drafts, messages, reports, notices, depts, topics, interventions,
+      lfItems, lfClaims, lfClues, lfPoints, lfMembers, lfDigests,
       replyBadge: {} // 我评论过的帖子的未读回复数 {uid: {tzid: n}}
     };
   }
@@ -241,7 +392,7 @@
   let db = null;
   function load() {
     try { db = JSON.parse(localStorage.getItem(DB_KEY)); } catch (e) { db = null; }
-    if (!db || db.version !== 1) { db = seed(); persist(); }
+    if (!db || db.version !== 4) { db = seed(); persist(); }
     return db;
   }
   function persist() {
@@ -676,13 +827,13 @@
   }
 
   /* ---------- 消息通知 ---------- */
-  function notify(toUid, type, text, tzid) {
+  function notify(toUid, type, text, tzid, lfid) {
     if (!toUid || toUid === db.currentUserId) return;
-    db.notices.push({ id: uid('xx_'), uid: toUid, type, text, fromId: db.currentUserId, tzid, cjsj: now(), read: false });
+    db.notices.push({ id: uid('xx_'), uid: toUid, type, text, fromId: db.currentUserId, tzid, lfid, cjsj: now(), read: false });
   }
   function notices(type) {
     return db.notices.filter(n => n.uid === db.currentUserId && (!type || n.type === type)).sort((a, b) => b.cjsj - a.cjsj)
-      .map(n => Object.assign({}, n, { from: user(n.fromId), post: getPost(n.tzid) }));
+      .map(n => Object.assign({}, n, { from: user(n.fromId), post: getPost(n.tzid), lf: n.lfid ? lfGet(n.lfid) : null }));
   }
   function unreadNotices(type) { return db.notices.filter(n => n.uid === db.currentUserId && !n.read && (!type || n.type === type)).length; }
   function markNoticesRead(type) {
@@ -871,14 +1022,453 @@
     return list;
   }
 
+  /* ---------- 失物招领 ---------- */
+  const lfRaw = id => db.lfItems.find(x => x.id === id);
+  const lfPoint = id => db.lfPoints.find(p => p.id === id);
+  const lfMember = (id = db.currentUserId) => db.lfMembers.find(m => m.uid === id);
+  const lfIsSuper = () => me().role === 'admin';
+  function lfRoles(id = db.currentUserId) {
+    const u = user(id);
+    if (u && u.role === 'admin') return ['register', 'checker', 'admin'];
+    const m = lfMember(id);
+    return m ? m.roles.slice() : [];
+  }
+  const lfIsTeam = () => lfRoles().length > 0;
+  // action: register 登记 | check 核对交接 | admin 配置管理；传入物品时按负责服务点限定范围
+  function lfCan(action, it) {
+    if (lfIsSuper()) return true;
+    const m = lfMember();
+    if (!m) return false;
+    if (m.roles.includes('admin')) return true;
+    if (!m.roles.includes(action === 'check' ? 'checker' : action)) return false;
+    if (it && it.bgdid) return m.points.includes(it.bgdid);
+    return true;
+  }
+  const lfMyPoints = () => {
+    if (lfIsSuper() || lfRoles().includes('admin')) return db.lfPoints.slice();
+    const m = lfMember();
+    return m ? db.lfPoints.filter(p => m.points.includes(p.id)) : [];
+  };
+  // 同学自行保管的物品由发布者核对；交到服务点的由团队核对
+  const lfCanReview = it => it.ly === 'student' && it.bgfs === 'self' ? it.fbrid === db.currentUserId : lfCan('check', it);
+  const lfExpired = it => it.lx === 'found' && it.zt === 'pending' && now() - it.fbsj > LF_EXPIRE;
+  const lfZt = it => lfExpired(it) ? 'expired' : it.zt;
+  const lfLongIdle = it => it.lx === 'found' && ['pending', 'checking'].includes(it.zt) && !lfExpired(it) && now() - it.gxsj > 30 * DAY;
+  function maskName(s) {
+    if (!s) return '';
+    return s.length <= 2 ? s[0] + '*' : s[0] + '*'.repeat(s.length - 2) + s[s.length - 1];
+  }
+  const maskNo = s => !s ? '' : s.length <= 6 ? s : s.slice(0, 4) + '****' + s.slice(-2);
+  function lfView(it) {
+    if (!it) return null;
+    const u = user(it.fbrid) || {};
+    const p = lfPoint(it.bgdid);
+    const zt = lfZt(it);
+    const claims = db.lfClaims.filter(c => c.itemId === it.id);
+    const mine = it.fbrid === db.currentUserId;
+    const priv = mine || lfCan('register', it) || lfCan('check', it);
+    const team = it.ly === 'team';
+    return Object.assign({}, it, {
+      ztKey: zt, ztLabel: LF_ZT[zt].label, tone: LF_ZT[zt].tone, flLabel: (LF_FL_MAP[it.fl] || {}).label || '其他',
+      isTeam: team, lyLabel: team ? '团队发布' : '同学发布', fbrnc: u.nc || '同学', fbrtx: u.tx,
+      czr: u, point: p || null, card: priv ? it.card : null,
+      bgText: it.lx === 'lost' ? '' : it.bgfs === 'self' ? '发布同学保管' : (p ? p.mc : '服务点'),
+      isMine: mine, canReview: lfCanReview(it), canEdit: (mine && !team) || lfCan('register', it), canReturn: mine || lfCan('check', it),
+      sjText: fmtDate(it.sj) + (it.sjsm ? ' ' + it.sjsm : ''), expired: zt === 'expired', longIdle: lfLongIdle(it),
+      claimN: claims.filter(c => ['pending', 'more', 'pass'].includes(c.zt)).length, clueN: db.lfClues.filter(c => c.itemId === it.id).length,
+      myClaim: claims.filter(c => c.sqrid === db.currentUserId).sort((a, b) => b.cjsj - a.cjsj)[0] || null,
+      closed: ['returned', 'found', 'withdrawn', 'expired'].includes(zt)
+    });
+  }
+  const lfGet = id => lfView(lfRaw(id));
+  const LF_ACTIVE = { found: ['pending', 'checking'], lost: ['seeking'] };
+  function lfList({ lx = 'found', kw = '', xq = '', fl = '', days = 0, ly = '', zt = '', closed = false } = {}) {
+    kw = kw.trim().toLowerCase();
+    let list = db.lfItems.filter(it => it.lx === lx);
+    if (zt) list = list.filter(it => lfZt(it) === zt);
+    else if (!closed) list = list.filter(it => LF_ACTIVE[lx].includes(lfZt(it)));
+    else list = list.filter(it => !['withdrawn', 'expired'].includes(lfZt(it)));
+    if (xq) list = list.filter(it => it.xq === xq);
+    if (fl) list = list.filter(it => it.fl === fl);
+    if (ly) list = list.filter(it => it.ly === ly);
+    if (+days) list = list.filter(it => it.fbsj >= startOfDay(now()) - (days - 1) * DAY);
+    list = list.map(lfView);
+    if (kw) list = list.filter(it => [it.bh, it.mc, it.nr, it.dd, it.xq, it.flLabel].join(' ').toLowerCase().includes(kw));
+    return list.sort((a, b) => (a.closed - b.closed) || b.fbsj - a.fbsj);
+  }
+  function lfNextBh(lx) {
+    const pre = (lx === 'lost' ? 'XW' : 'SW') + fmtDate(now()).replace(/-/g, '');
+    const n = db.lfItems.filter(x => x.bh.startsWith(pre)).length + 1;
+    return pre + String(n).padStart(3, '0');
+  }
+  const lfLog = (it, act, note) => { it.logs.push({ t: now(), act, uid: db.currentUserId, note: note || '' }); it.gxsj = now(); };
+  function lfCheckFields(d) {
+    if (!d.fl) throw new Error('请选择物品种类');
+    if (!(d.mc || '').trim()) throw new Error('请填写物品名称');
+    if (!d.xq) throw new Error('请选择校区');
+    if (!(d.dd || '').trim()) throw new Error(d.lx === 'lost' ? '请填写可能丢失的地点' : '请填写捡到地点');
+    if (d.lx === 'found' && d.bgfs === 'point' && !d.bgdid) throw new Error('请选择交到的服务点');
+  }
+  function lfCreate(d, { silent } = {}) {
+    assertActive();
+    const team = d.ly === 'team';
+    if (team && !lfCan('register', d.bgdid ? { bgdid: d.bgdid } : null)) {
+      throw new Error(lfMember() || lfIsSuper() ? '当前账号没有该服务点的登记权限' : '当前账号没有资助团队标识，不能以团队身份发布');
+    }
+    const lx = d.lx === 'lost' ? 'lost' : 'found';
+    const bgfs = lx === 'lost' ? '' : team ? 'point' : (d.bgfs || 'self');
+    const x = Object.assign({}, d, { lx, bgfs });
+    lfCheckFields(x);
+    const t = now();
+    const it = {
+      id: uid('lf_'), bh: lfNextBh(lx), lx, fl: d.fl, mc: d.mc.trim(), xq: d.xq, dd: d.dd.trim(), sj: d.sj || t, sjsm: (d.sjsm || '').trim(),
+      nr: (d.nr || '').trim(), tps: d.tps || [], ly: team ? 'team' : 'student', fbrid: db.currentUserId, bgfs, bgdid: bgfs === 'point' ? d.bgdid : '',
+      zt: lx === 'lost' ? 'seeking' : 'pending', card: d.card || null, cxyy: '', fbsj: t, gxsj: t,
+      logs: [{ t, act: '登记', uid: db.currentUserId, note: team ? '团队登记' : '同学发布' }]
+    };
+    db.lfItems.push(it);
+    if (!silent) commit();
+    return it;
+  }
+  function lfUpdate(id, d) {
+    const it = lfRaw(id);
+    if (!it) throw new Error('物品记录不存在');
+    const v = lfView(it);
+    if (!v.canEdit) throw new Error('没有编辑该物品的权限');
+    const next = Object.assign({}, it, d);
+    lfCheckFields(next);
+    const from = it.bgdid;
+    ['fl', 'mc', 'xq', 'dd', 'sj', 'sjsm', 'nr', 'tps', 'bgfs', 'bgdid', 'card'].forEach(k => { if (d[k] !== undefined) it[k] = typeof d[k] === 'string' ? d[k].trim() : d[k]; });
+    if (it.bgfs !== 'point') it.bgdid = '';
+    if (from !== it.bgdid) lfLog(it, '变更保管点', `${(lfPoint(from) || {}).mc || '发布同学保管'} → ${(lfPoint(it.bgdid) || {}).mc || '发布同学保管'}`);
+    else lfLog(it, '编辑信息');
+    commit();
+  }
+  function lfTransfer(id, pointId) {
+    const it = lfRaw(id);
+    if (it.fbrid !== db.currentUserId && !lfCan('register')) throw new Error('没有操作权限');
+    if (!lfPoint(pointId)) throw new Error('请选择服务点');
+    const from = it.bgfs === 'self' ? '发布同学保管' : (lfPoint(it.bgdid) || {}).mc;
+    Object.assign(it, { bgfs: 'point', bgdid: pointId });
+    lfLog(it, '转交服务点', `${from} → ${lfPoint(pointId).mc}`);
+    commit();
+  }
+  function lfWithdraw(id, reason) {
+    const it = lfRaw(id);
+    if (!lfView(it).canEdit) throw new Error('没有撤回该信息的权限');
+    if (!(reason || '').trim()) throw new Error('请填写撤回原因');
+    it.zt = 'withdrawn';
+    it.cxyy = reason.trim();
+    lfLog(it, '撤回', it.cxyy);
+    db.lfClaims.filter(c => c.itemId === id && ['pending', 'more', 'pass'].includes(c.zt)).forEach(c => {
+      Object.assign(c, { zt: 'reject', jl: '物品信息已撤回', gxsj: now() });
+      notify(c.sqrid, 'lost', `你认领的「${it.mc}」信息已撤回`, undefined, id);
+    });
+    commit();
+  }
+  function lfMarkFound(id) {
+    const it = lfRaw(id);
+    if (it.fbrid !== db.currentUserId) throw new Error('只有发布人可以标记已找回');
+    it.zt = 'found';
+    lfLog(it, '标记已找回');
+    commit();
+  }
+  function lfCloseClaims(it, keepId) {
+    db.lfClaims.filter(c => c.itemId === it.id && c.id !== keepId && ['pending', 'more', 'pass'].includes(c.zt)).forEach(c => {
+      Object.assign(c, { zt: 'reject', jl: '物品已归还给其他认领人', gxsj: now() });
+      c.logs.push({ t: now(), act: '申请关闭', uid: db.currentUserId, note: '物品已归还给其他认领人' });
+      notify(c.sqrid, 'lost', `你认领的「${it.mc}」已归还给其他认领人，申请已关闭`, undefined, it.id);
+    });
+  }
+  // 归还：claimId 为空表示线下直接归还（团队台账可批量）
+  function lfReturn(ids, { claimId, note } = {}) {
+    ids = [].concat(ids);
+    if (!ids.length) throw new Error('请先选择物品');
+    ids.forEach(id => {
+      const it = lfRaw(id);
+      if (!it) return;
+      if (!lfView(it).canReturn) throw new Error(`没有归还「${it.mc}」的权限`);
+      if (it.lx !== 'found' || !['pending', 'checking'].includes(it.zt)) return;
+      it.zt = 'returned';
+      lfLog(it, '完成归还', note || (claimId ? '按认领申请交接完成' : '线下领取'));
+      if (claimId) {
+        const c = db.lfClaims.find(x => x.id === claimId);
+        Object.assign(c, { zt: 'done', gxsj: now() });
+        c.logs.push({ t: now(), act: '完成归还', uid: db.currentUserId, note: note || '' });
+        notify(c.sqrid, 'lost', `你认领的「${it.mc}」已完成归还`, undefined, it.id);
+      }
+      lfCloseClaims(it, claimId);
+    });
+    commit();
+  }
+  function lfClaim(itemId, { tz, sjdd, tps }) {
+    assertActive();
+    const it = lfRaw(itemId);
+    if (!it || it.lx !== 'found') throw new Error('物品记录不存在');
+    if (it.fbrid === db.currentUserId) throw new Error('不能认领自己发布的物品');
+    if (!['pending', 'checking'].includes(lfZt(it))) throw new Error('该物品当前不可认领');
+    if (db.lfClaims.some(c => c.itemId === itemId && c.sqrid === db.currentUserId && ['pending', 'more', 'pass'].includes(c.zt))) throw new Error('你已提交过认领申请，请在「我的认领」查看进度');
+    if (!(tz || '').trim()) throw new Error('请填写可证明归属的特征');
+    if (!(sjdd || '').trim()) throw new Error('请填写丢失时间和地点');
+    const t = now();
+    const c = { id: uid('rl_'), itemId, sqrid: db.currentUserId, tz: tz.trim(), sjdd: sjdd.trim(), tps: tps || [], zt: 'pending', bcyq: '', jl: '', clr: '', jj: null, cjsj: t, gxsj: t, logs: [{ t, act: '提交申请', uid: db.currentUserId }] };
+    db.lfClaims.push(c);
+    lfReviewers(it).forEach(u => notify(u, 'lost', '有新的认领申请待核对：' + it.mc, undefined, itemId));
+    commit();
+    return c;
+  }
+  function lfReviewers(it) {
+    if (it.ly === 'student' && it.bgfs === 'self') return [it.fbrid];
+    const p = lfPoint(it.bgdid);
+    const list = db.lfMembers.filter(m => m.roles.includes('admin') || (m.roles.includes('checker') && m.points.includes(it.bgdid))).map(m => m.uid);
+    if (p && p.fzr && !list.includes(p.fzr)) list.push(p.fzr);
+    return list;
+  }
+  function lfSupplement(claimId, { tz, sjdd, tps }) {
+    const c = db.lfClaims.find(x => x.id === claimId);
+    if (!c || c.sqrid !== db.currentUserId) throw new Error('申请不存在');
+    if (c.zt !== 'more') throw new Error('当前申请无需补充材料');
+    if (!(tz || '').trim()) throw new Error('请填写补充说明');
+    Object.assign(c, { tz: tz.trim(), sjdd: (sjdd || c.sjdd).trim(), tps: tps || c.tps, zt: 'pending', gxsj: now() });
+    c.logs.push({ t: now(), act: '补充材料', uid: db.currentUserId });
+    const it = lfRaw(c.itemId);
+    lfReviewers(it).forEach(u => notify(u, 'lost', '认领人已补充材料：' + it.mc, undefined, it.id));
+    commit();
+  }
+  // result: pass 通过 | reject 未通过 | more 要求补充
+  function lfReview(claimId, result, note) {
+    const c = db.lfClaims.find(x => x.id === claimId);
+    const it = lfRaw(c.itemId);
+    if (!lfCanReview(it)) throw new Error('没有核对该申请的权限');
+    note = (note || '').trim();
+    if (result === 'more' && !note) throw new Error('请填写需要补充的材料');
+    if (result === 'reject' && !note) throw new Error('请填写未通过原因');
+    c.zt = result;
+    c.clr = db.currentUserId;
+    c.gxsj = now();
+    if (result === 'more') c.bcyq = note;
+    else c.jl = note || (result === 'pass' ? '特征与登记信息一致' : '');
+    c.logs.push({ t: now(), act: { pass: '核对通过', reject: '核对未通过', more: '要求补充材料' }[result], uid: db.currentUserId, note });
+    if (result === 'pass' && it.zt === 'pending') { it.zt = 'checking'; lfLog(it, '进入核对', '认领申请核对通过'); }
+    if (result !== 'pass' && it.zt === 'checking' && !db.lfClaims.some(x => x.itemId === it.id && x.zt === 'pass')) { it.zt = 'pending'; lfLog(it, '恢复待认领'); }
+    const msg = { pass: `你认领的「${it.mc}」已核对通过，请留意交接安排`, reject: `你认领的「${it.mc}」未通过核对：${note}`, more: `你认领的「${it.mc}」需要补充材料：${note}` }[result];
+    notify(c.sqrid, 'lost', msg, undefined, it.id);
+    commit();
+  }
+  // 安排交接：把地点、时间、联系方式通过私信发给认领人，返回认领人 id 便于跳转会话
+  function lfHandover(claimId, { dd, sj, lxfs }) {
+    const c = db.lfClaims.find(x => x.id === claimId);
+    const it = lfRaw(c.itemId);
+    if (!lfCanReview(it)) throw new Error('没有安排交接的权限');
+    if (c.zt !== 'pass') throw new Error('申请核对通过后才能安排交接');
+    if (!(dd || '').trim()) throw new Error('请填写交接地点');
+    if (!(sj || '').trim()) throw new Error('请填写交接时间');
+    c.jj = { dd: dd.trim(), sj: sj.trim(), lxfs: (lxfs || '').trim(), t: now() };
+    c.logs.push({ t: now(), act: '安排交接', uid: db.currentUserId, note: `${c.jj.dd} · ${c.jj.sj}` });
+    const nr = `【失物招领】你认领的「${it.mc}」已核对通过，请按以下安排领取：\n地点：${c.jj.dd}\n时间：${c.jj.sj}` + (c.jj.lxfs ? `\n联系：${c.jj.lxfs}` : '') + '\n领取时请携带校园卡或有效证件。';
+    db.messages.push({ id: uid('sx_'), fsrid: db.currentUserId, jsrid: c.sqrid, nr, cjsj: now(), sfyd: '0' });
+    commit();
+    return c.sqrid;
+  }
+  const lfFinish = (claimId, note) => lfReturn([db.lfClaims.find(x => x.id === claimId).itemId], { claimId, note });
+  function lfClaimView(c) {
+    return Object.assign({}, c, { item: lfGet(c.itemId), sqr: user(c.sqrid), clrUser: user(c.clr), ztLabel: LF_CLAIM_ZT[c.zt].label, tone: LF_CLAIM_ZT[c.zt].tone });
+  }
+  const lfClaimGet = id => { const c = db.lfClaims.find(x => x.id === id); return c ? lfClaimView(c) : null; };
+  function lfClaimsOf(itemId) {
+    const it = lfRaw(itemId);
+    if (!it || !lfCanReview(it)) return [];
+    return db.lfClaims.filter(c => c.itemId === itemId).sort((a, b) => b.cjsj - a.cjsj).map(lfClaimView);
+  }
+  function lfMyClaims(tab = 'ongoing') {
+    const set = tab === 'ongoing' ? ['pending', 'more', 'pass'] : ['reject', 'done'];
+    return db.lfClaims.filter(c => c.sqrid === db.currentUserId && set.includes(c.zt)).sort((a, b) => b.gxsj - a.gxsj).map(lfClaimView);
+  }
+  // 待处理的认领：team=true 只看团队保管的物品
+  function lfReviewQueue({ team = false, zt = '' } = {}) {
+    return db.lfClaims.filter(c => {
+      const it = lfRaw(c.itemId);
+      if (!it || !lfCanReview(it)) return false;
+      if (team && it.bgfs !== 'point') return false;
+      return zt ? c.zt === zt : ['pending', 'more', 'pass'].includes(c.zt);
+    }).sort((a, b) => b.cjsj - a.cjsj).map(lfClaimView);
+  }
+  const lfMyItems = (lx = '') => db.lfItems.filter(it => it.fbrid === db.currentUserId && it.ly === 'student' && (!lx || it.lx === lx)).sort((a, b) => b.fbsj - a.fbsj).map(lfView);
+  function lfAddClue(itemId, data, tps) {
+    assertActive();
+    const it = lfRaw(itemId);
+    if (!it || it.lx !== 'lost') throw new Error('寻物信息不存在');
+    if (it.zt !== 'seeking') throw new Error('这条寻物已结束，不能再提供线索');
+    if (it.fbrid === db.currentUserId) throw new Error('不能给自己的寻物提供线索');
+    const o = data && typeof data === 'object' ? data : { nr: data, tps };
+    const dd = (o.dd || '').trim();
+    const sj = (o.sj || '').trim();
+    const nr = (o.nr || '').trim();
+    const imgs = (o.tps || tps || []).slice(0, 3);
+    if (!dd && !sj && !nr) throw new Error('请填写线索内容');
+    db.lfClues.push({ id: uid('xs_'), itemId, uid: db.currentUserId, dd, sj, nr, tps: imgs, cjsj: now() });
+    const bits = [dd && `看到的地点：${dd}`, sj && `看到的时间：${sj}`, nr].filter(Boolean).join('；');
+    db.messages.push({ id: uid('sx_'), fsrid: db.currentUserId, jsrid: it.fbrid, nr: `【失物线索】关于你的「${it.mc}」：${bits}`, cjsj: now(), sfyd: '0' });
+    notify(it.fbrid, 'lost', `有同学为你的寻物「${it.mc}」提供了线索`, undefined, itemId);
+    commit();
+  }
+  const lfClues = itemId => db.lfClues.filter(c => c.itemId === itemId).sort((a, b) => b.cjsj - a.cjsj).map(c => Object.assign({}, c, { u: user(c.uid) }));
+  function lfStation() {
+    const today = startOfDay(now());
+    const team = db.lfItems.filter(it => it.ly === 'team' && it.lx === 'found');
+    return {
+      todayNew: team.filter(it => it.fbsj >= today).length,
+      pending: db.lfItems.filter(it => it.lx === 'found' && it.zt === 'pending' && !lfExpired(it)).length,
+      seeking: db.lfItems.filter(it => it.lx === 'lost' && it.zt === 'seeking').length
+    };
+  }
+  function lfStats() {
+    const today = startOfDay(now());
+    const scope = db.lfItems.filter(it => it.lx === 'found' && (lfIsSuper() || lfRoles().includes('admin') || (it.bgdid && lfMyPoints().some(p => p.id === it.bgdid))));
+    return {
+      pending: scope.filter(it => it.zt === 'pending' && !lfExpired(it)).length,
+      todayNew: scope.filter(it => it.fbsj >= today).length,
+      claims: lfReviewQueue({ team: true, zt: 'pending' }).length,
+      todayReturned: scope.filter(it => it.zt === 'returned' && it.gxsj >= today).length,
+      idle: scope.filter(lfLongIdle).length
+    };
+  }
+  function lfAdminItems(f = {}) {
+    let list = db.lfItems.filter(it => it.lx === 'found' && (lfIsSuper() || lfRoles().includes('admin') || it.ly === 'team' || it.bgfs === 'point'));
+    if (!lfIsSuper() && !lfRoles().includes('admin')) { const ids = lfMyPoints().map(p => p.id); list = list.filter(it => ids.includes(it.bgdid)); }
+    if (f.kw) list = list.filter(it => (it.bh + it.mc + it.dd + (it.card ? it.card.xm + it.card.xh : '')).includes(f.kw.trim()));
+    if (f.xq) list = list.filter(it => it.xq === f.xq);
+    if (f.fl) list = list.filter(it => it.fl === f.fl);
+    if (f.bgdid) list = list.filter(it => it.bgdid === f.bgdid);
+    if (f.zt) list = list.filter(it => f.zt === 'idle' ? lfLongIdle(it) : lfZt(it) === f.zt);
+    if (f.start) list = list.filter(it => it.fbsj >= f.start);
+    if (f.end) list = list.filter(it => it.fbsj <= f.end);
+    return list.map(lfView).sort((a, b) => b.fbsj - a.fbsj);
+  }
+  /* 每日汇总：团队当天登记的物品，人工确认后发布 */
+  const lfDayItems = day => db.lfItems.filter(it => it.ly === 'team' && it.lx === 'found' && it.zt !== 'withdrawn' && it.fbsj >= day && it.fbsj < day + DAY);
+  function lfDigestView(d) {
+    if (!d) return null;
+    const items = d.itemIds.map(lfGet).filter(Boolean);
+    const groups = {};
+    items.forEach(it => { groups[it.xq] = (groups[it.xq] || 0) + 1; });
+    const fls = {};
+    items.forEach(it => { fls[it.flLabel] = (fls[it.flLabel] || 0) + 1; });
+    return Object.assign({}, d, {
+      items, total: items.length, groups: Object.entries(groups).map(([xq, n]) => ({ xq, n })), fls: Object.entries(fls).map(([label, n]) => ({ label, n })),
+      qrrUser: user(d.qrr), ztLabel: d.zt === 'published' ? '已发布' : '待确认', isToday: d.rq === startOfDay(now())
+    });
+  }
+  function lfDigestGenerate(day = startOfDay(now()), { silent } = {}) {
+    if (!lfCan('register')) throw new Error('没有生成汇总的权限');
+    const itemIds = lfDayItems(day).map(it => it.id);
+    let d = db.lfDigests.find(x => x.rq === day);
+    if (d) Object.assign(d, { itemIds, zt: 'draft', scr: db.currentUserId, cjsj: now() });
+    else { d = { id: uid('hz_'), rq: day, itemIds, zt: 'draft', scr: db.currentUserId, qrr: '', qrsj: 0, cjsj: now() }; db.lfDigests.push(d); }
+    if (!silent) commit();
+    return d;
+  }
+  function lfDigestPublish(id) {
+    if (!lfCan('register')) throw new Error('没有发布汇总的权限');
+    const d = db.lfDigests.find(x => x.id === id);
+    if (!d.itemIds.length) throw new Error('当天没有团队登记的物品，无需发布');
+    Object.assign(d, { zt: 'published', qrr: db.currentUserId, qrsj: now() });
+    commit();
+  }
+  const lfDigestGet = id => lfDigestView(db.lfDigests.find(x => x.id === id));
+  const lfDigests = ({ published = true } = {}) => db.lfDigests.filter(d => !published || d.zt === 'published').sort((a, b) => b.rq - a.rq).map(lfDigestView);
+  const lfTodayDigest = () => lfDigestView(db.lfDigests.find(d => d.rq === startOfDay(now()) && d.zt === 'published'));
+  /* 批量登记：每行一张校园卡，自动识别姓名、学号、学院、校区 */
+  function lfParseCards(text, def = {}) {
+    return (text || '').split(/\n+/).map(s => s.trim()).filter(Boolean).map(line => {
+      const r = { line, xm: '', xh: '', xy: '', xq: def.xq || '', ok: true, err: '' };
+      line.split(/[\s,，、;；|\t]+/).filter(Boolean).forEach(p => {
+        if (/^\d{6,}$/.test(p)) r.xh = p;
+        else if (LF_XQ.includes(p) || LF_XQ_ALIAS[p]) r.xq = LF_XQ.includes(p) ? p : LF_XQ_ALIAS[p];
+        else if (/(学院|系|研究院|书院)$/.test(p)) r.xy = p;
+        else if (/^[\u4e00-\u9fa5·]{2,5}$/.test(p) && !r.xm) r.xm = p;
+      });
+      if (!r.xm) { r.ok = false; r.err = '未识别到姓名'; }
+      else if (!r.xq) { r.ok = false; r.err = '未识别到校区'; }
+      return r;
+    });
+  }
+  // rows: 校园卡 {xm,xh,xy,xq} 或其他物品 {fl,mc,xq,dd,nr,tps}；def: {bgdid, dd, sj}
+  function lfBatchCreate(rows, def = {}) {
+    if (!lfCan('register', def.bgdid ? { bgdid: def.bgdid } : null)) throw new Error('当前账号没有该服务点的登记权限');
+    if (!def.bgdid) throw new Error('请选择保管服务点');
+    rows = rows.filter(r => r.ok !== false);
+    if (!rows.length) throw new Error('没有可登记的记录');
+    rows.forEach((r, i) => {
+      if (r.fl && r.fl !== 'campuscard') {
+        if (!(r.mc || '').trim()) throw new Error(`第 ${i + 1} 行请填写物品名称`);
+        lfCreate({ ly: 'team', lx: 'found', fl: r.fl, mc: r.mc, xq: r.xq || def.xq, dd: r.dd || def.dd, sj: def.sj, nr: r.nr, tps: r.tps || [], bgdid: def.bgdid }, { silent: true });
+      } else {
+        lfCreate({
+          ly: 'team', lx: 'found', fl: 'campuscard', mc: '校园卡 · ' + maskName(r.xm), xq: r.xq || def.xq, dd: r.dd || def.dd, sj: def.sj,
+          nr: r.xy || '', tps: [], bgdid: def.bgdid, card: { xm: r.xm, xh: r.xh || '', xy: r.xy || '' }
+        }, { silent: true });
+      }
+    });
+    lfDigestGenerate(startOfDay(now()), { silent: true });
+    commit();
+    return rows.length;
+  }
+  /* 服务点与成员 */
+  const lfPoints = () => db.lfPoints.slice().sort((a, b) => a.px - b.px).map(p => Object.assign({}, p, {
+    fzrUser: user(p.fzr), items: db.lfItems.filter(it => it.bgdid === p.id && ['pending', 'checking'].includes(lfZt(it))).length
+  }));
+  function lfSavePoint(p) {
+    if (!lfCan('admin')) throw new Error('只有管理员可以配置服务点');
+    if (!(p.mc || '').trim()) throw new Error('请填写服务点名称');
+    if (!(p.zbap || '').trim()) throw new Error('请填写值班安排');
+    if (p.id) Object.assign(lfPoint(p.id), p, { px: +p.px || 0 });
+    else db.lfPoints.push(Object.assign({ id: uid('lp_'), dz: '', lxfs: '站内私信', lstz: '', fzr: '' }, p, { px: +p.px || db.lfPoints.length + 1 }));
+    commit();
+  }
+  function lfDeletePoint(id) {
+    if (!lfCan('admin')) throw new Error('只有管理员可以配置服务点');
+    if (db.lfItems.some(it => it.bgdid === id && ['pending', 'checking'].includes(lfZt(it)))) throw new Error('该服务点仍有待认领物品，请先变更保管点');
+    db.lfPoints = db.lfPoints.filter(p => p.id !== id);
+    db.lfMembers.forEach(m => { m.points = m.points.filter(x => x !== id); });
+    commit();
+  }
+  const lfMembers = () => db.lfMembers.map(m => Object.assign({}, m, {
+    u: user(m.uid), roleLabels: m.roles.map(r => LF_ROLES[r].label), pointNames: m.roles.includes('admin') ? ['全部服务点'] : m.points.map(id => (lfPoint(id) || {}).mc).filter(Boolean)
+  })).sort((a, b) => a.cjsj - b.cjsj);
+  function lfSaveMember({ uid: id, roles, points }) {
+    if (!lfCan('admin')) throw new Error('只有管理员可以管理成员');
+    const u = user(id);
+    if (!u) throw new Error('未找到该用户，请检查学号');
+    if (u.role === 'admin') throw new Error('超级管理员无需添加');
+    if (!roles || !roles.length) throw new Error('请至少选择一个角色');
+    const old = lfMember(id);
+    if (!lfIsSuper() && (roles.includes('admin') || (old && old.roles.includes('admin')))) throw new Error('只有超级管理员可以设置管理员');
+    if (!roles.includes('admin') && (!points || !points.length)) throw new Error('请选择负责的服务点');
+    if (old) Object.assign(old, { roles, points: points || [] });
+    else db.lfMembers.push({ uid: id, roles, points: points || [], cjsj: now() });
+    commit();
+  }
+  function lfRemoveMember(id) {
+    if (!lfCan('admin')) throw new Error('只有管理员可以管理成员');
+    const m = lfMember(id);
+    if (m && m.roles.includes('admin') && !lfIsSuper()) throw new Error('只有超级管理员可以移除管理员');
+    db.lfMembers = db.lfMembers.filter(x => x.uid !== id);
+    commit();
+  }
+  const findUser = kw => { kw = (kw || '').trim(); return kw ? db.users.find(u => u.xh === kw || u.xm === kw || u.nc === kw) : null; };
+
   function setCurrentUser(id) { db.currentUserId = id; commit(); }
   function reset() { db = seed(); commit(); }
   const DEMO_USERS = [
     { id: 'u_admin', label: '学工系统管理员（超级管理员）' },
     { id: 'u_hq', label: '后勤服务中心（部门认证账号）' },
     { id: 'u101', label: '学生 · 橘子洲的风' },
+    { id: 'u103', label: '学生 · 陈语桐（小麓同学）' },
     { id: 'u121', label: '学生 · 未完善资料（首次使用）' },
-    { id: 'u113', label: '学生 · 已封禁账号' }
+    { id: 'u113', label: '学生 · 已封禁账号' },
+    { id: 'u_zz1', label: '资助团队 · 登记 + 核对成员' },
+    { id: 'u_zz2', label: '资助团队 · 登记成员（新校区）' }
   ];
 
   window.Store = {
@@ -892,6 +1482,11 @@
     notices, unreadNotices, markNoticesRead, report, myReports, postReports, handleReports,
     dashboard, adminPosts, adminUsers, banUser, unbanUser, certifyUser, saveDept, deleteDept, managedDepts,
     adminTopics, saveTopic, deleteTopic, activeTopics, riskPosts, interventions, saveIntervention, deleteIntervention, externalSentiment,
-    fmtDate, fmtDateTime, relTime, DAY, HOUR
+    LF_XQ, LF_FL, LF_FL_MAP, LF_ZT, LF_CLAIM_ZT, LF_ROLES, LF_DAYS,
+    lfRoles, lfIsTeam, lfIsSuper, lfCan, lfMyPoints, lfMember, lfPoint, lfList, lfGet, lfCreate, lfUpdate, lfTransfer, lfWithdraw, lfMarkFound,
+    lfReturn, lfClaim, lfSupplement, lfReview, lfHandover, lfFinish, lfClaimGet, lfClaimsOf, lfMyClaims, lfReviewQueue, lfMyItems,
+    lfAddClue, lfClues, lfStation, lfStats, lfAdminItems, lfDayItems, lfDigestGenerate, lfDigestPublish, lfDigestGet, lfDigests, lfTodayDigest,
+    lfParseCards, lfBatchCreate, lfPoints, lfSavePoint, lfDeletePoint, lfMembers, lfSaveMember, lfRemoveMember, findUser, maskName, maskNo,
+    fmtDate, fmtDateTime, relTime, startOfDay, DAY, HOUR
   };
 })();

@@ -9,8 +9,15 @@
     { path: '/bbs/admin/posts/index', title: '帖子管理' },
     { path: '/bbs/admin/users/index', title: '用户管理' },
     { path: '/bbs/admin/departments/index', title: '部门管理' },
-    { path: '/bbs/admin/topics/index', title: '话题管理' }
+    { path: '/bbs/admin/topics/index', title: '话题管理' },
+    { path: '/bbs/admin/lost/items', title: '失物台账', lost: true, group: '失物招领' },
+    { path: '/bbs/admin/lost/register', title: '批量登记', lost: true, group: '失物招领' },
+    { path: '/bbs/admin/lost/digest', title: '每日汇总', lost: true, group: '失物招领' },
+    { path: '/bbs/admin/lost/points', title: '服务点与成员', lost: true, group: '失物招领' }
   ];
+  // 资助团队成员只能进入失物招领相关的管理页
+  PC.canAdmin = page => Store.me().role === 'admin' || (!!page && !!page.lost && Store.lfIsTeam());
+  const adminMenu = () => ADMIN_MENU.filter(m => PC.canAdmin({ lost: m.lost }));
   const DEMO_USERS = Store.DEMO_USERS;
 
   PC.go = (path, query) => {
@@ -31,8 +38,8 @@
     const isAdmin = me.role === 'admin';
     const path = UI.parseHash().path;
     const activeName = PC.isAdminRoute(path) ? '中南点点管理' : '中南点点';
-    const items = NAV.filter(n => n !== '中南点点管理' || isAdmin);
-    const roleName = isAdmin ? '超级管理员' : me.sfgf === '1' ? '部门账号' : '学生';
+    const items = NAV.filter(n => n !== '中南点点管理' || adminMenu().length);
+    const roleName = isAdmin ? '超级管理员' : me.sfgf === '1' ? '部门账号' : Store.lfIsTeam() ? '资助团队' : '学生';
     document.getElementById('header').innerHTML = `
       <div class="header__logo" data-act="logo" title="中南大学智慧学工"></div>
       <div class="header__top">
@@ -75,7 +82,7 @@
     if (a === 'nav') {
       const n = el.dataset.name;
       if (n === '中南点点') PC.go(HOME);
-      else if (n === '中南点点管理') PC.go(ADMIN_MENU[0].path);
+      else if (n === '中南点点管理') PC.go(adminMenu()[0].path);
       else toast(`原型未包含「${n}」模块`, 'info');
     } else if (a === 'navL' || a === 'navR') {
       document.getElementById('topNav').scrollBy({ left: a === 'navL' ? -200 : 200, behavior: 'smooth' });
@@ -85,7 +92,7 @@
       Store.setCurrentUser(el.dataset.id);
       const u = Store.me();
       toast('已切换为：' + (u.xm || u.nc), 'success');
-      if (PC.isAdminRoute(UI.parseHash().path) && u.role !== 'admin') PC.go(HOME);
+      if (PC.isAdminRoute(UI.parseHash().path) && !PC.canAdmin(PC.page)) PC.go(HOME);
     } else if (a === 'reset') {
       UI.confirm('确定重置所有演示数据？当前浏览器中新增的帖子、评论等将被清除。').then(ok => {
         if (ok) { Store.reset(); toast('已重置演示数据', 'success'); PC.go(HOME); }
@@ -106,15 +113,22 @@
   }
   function setAdminTags(t) { sessionStorage.setItem(TAGS_KEY, JSON.stringify(t)); }
   function adminFrame(path, page) {
-    let tags = adminTags();
-    if (!tags.some(t => t.path === path)) { tags.push({ path, title: page.title }); setAdminTags(tags); }
+    let tags = adminTags().filter(t => PC.canAdmin(PC.pages[t.path]));
+    if (!tags.some(t => t.path === path)) tags.push({ path, title: page.title });
+    setAdminTags(tags);
     const menuActive = page.menu || path;
+    let prevGroup = '';
+    const menuHtml = adminMenu().map(m => {
+      const head = m.group && m.group !== prevGroup ? `<div class="aside-group"><i></i><span>${esc(m.group)}</span></div>` : '';
+      prevGroup = m.group || '';
+      return `${head}<div class="aside-item${m.group ? ' aside-item--sub' : ''} ${m.path === menuActive ? 'is-active' : ''}" data-admin-go="${m.path}">
+            <span class="aside-item__ico"></span><span>${esc(m.title)}</span></div>`;
+    }).join('');
     return `<div class="admin-layout">
       <aside class="aside-split">
         <div class="aside-split__title"><i></i>中南点点</div>
         <div class="aside-split__list">
-          ${ADMIN_MENU.map(m => `<div class="aside-item ${m.path === menuActive ? 'is-active' : ''}" data-admin-go="${m.path}">
-            <span class="aside-item__ico"></span><span>${m.title}</span></div>`).join('')}
+          ${menuHtml}
         </div>
       </aside>
       <section class="admin-content">
@@ -135,7 +149,7 @@
     const { path, query } = UI.parseHash();
     const page = PC.pages[path];
     if (!page) { location.replace('#' + HOME); return; }
-    if (page.admin && Store.me().role !== 'admin') {
+    if (page.admin && !PC.canAdmin(page)) {
       toast('当前身份没有「中南点点管理」权限', 'warning');
       location.replace('#' + HOME);
       return;
@@ -174,7 +188,7 @@
       e.stopPropagation();
       let tags = adminTags().filter(t => t.path !== el.dataset.tagClose);
       setAdminTags(tags);
-      if (el.dataset.tagClose === PC.path) PC.go(tags.length ? tags[tags.length - 1].path : ADMIN_MENU[0].path);
+      if (el.dataset.tagClose === PC.path) PC.go(tags.length ? tags[tags.length - 1].path : adminMenu()[0].path);
       else el.closest('.tags-item').remove();
       return;
     }
@@ -189,7 +203,10 @@
   document.getElementById('backbar').addEventListener('click', e => { if (e.target.closest('button')) PC.back(); });
 
   window.addEventListener('hashchange', route);
-  window.addEventListener('zndd:change', () => { renderHeader(); PC.refresh(); UI.refreshLayers(); });
+  window.addEventListener('zndd:change', () => {
+    if (PC.page && PC.page.admin && !PC.canAdmin(PC.page)) { UI.closeAll(); PC.go(HOME); return; }
+    renderHeader(); PC.refresh(); UI.refreshLayers();
+  });
   document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('floatDd').addEventListener('click', () => PC.go(HOME));
     document.getElementById('floatAi').addEventListener('click', () => toast('AI 助手：原型未包含该模块', 'info'));

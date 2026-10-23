@@ -3,81 +3,159 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>中南点点 · HTML 原型入口</title>
+  <title>中南点点 · 演示入口</title>
   <link rel="icon" href="assets/pc/logo.svg">
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
-    body { font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Microsoft YaHei", sans-serif; color: #1e323f; min-height: 100vh;
-      background: linear-gradient(180deg, #1f5fd6 0, #3a8ce8 220px, #e3f1f9 220px); padding: 48px 20px; }
-    .wrap { max-width: 1080px; margin: 0 auto; }
-    .brand { display: flex; align-items: center; gap: 14px; color: #fff; margin-bottom: 36px; }
-    .brand img { width: 56px; height: 56px; background: #fff; border-radius: 50%; padding: 3px; }
-    .brand h1 { font-size: 28px; letter-spacing: 1px; }
-    .brand p { font-size: 14px; opacity: .9; margin-top: 4px; }
-    .cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px; }
-    .card { background: #fff; border-radius: 16px; padding: 24px; box-shadow: 0 10px 30px rgba(30, 80, 140, .1); display: flex; flex-direction: column; }
-    .card__tag { align-self: flex-start; font-size: 12px; font-weight: 600; padding: 3px 10px; border-radius: 10px; background: #e3f1f9; color: #3087cc; }
-    .card h2 { font-size: 20px; margin: 12px 0 8px; }
-    .card p { color: #627079; font-size: 14px; line-height: 1.7; flex: 1; }
-    .card ul { margin: 10px 0 18px 18px; color: #627079; font-size: 13px; line-height: 1.9; }
-    .card a.go { display: inline-flex; align-items: center; justify-content: center; height: 40px; border-radius: 8px; background: linear-gradient(270deg, #469fff, #065cf8); color: #fff; font-weight: 600; text-decoration: none; }
-    .card .sub { margin-top: 10px; display: flex; gap: 14px; flex-wrap: wrap; font-size: 13px; }
-    .card .sub a { color: #3087cc; text-decoration: none; }
-    .panel { margin-top: 24px; background: #fff; border-radius: 16px; padding: 22px 24px; box-shadow: 0 10px 30px rgba(30, 80, 140, .08); }
-    .panel h3 { font-size: 16px; margin-bottom: 4px; }
-    .panel > p { color: #627079; font-size: 13px; margin-bottom: 14px; line-height: 1.7; }
-    .users { display: flex; flex-wrap: wrap; gap: 10px; }
-    .users button { border: 1px solid #c7e1f0; background: #f6fcff; color: #1e323f; border-radius: 18px; padding: 8px 14px; font-size: 13px; cursor: pointer; }
-    .users button.is-cur { background: #3087cc; border-color: #3087cc; color: #fff; }
-    .ops { margin-top: 16px; display: flex; gap: 12px; align-items: center; flex-wrap: wrap; }
-    .ops button { border: 1px solid #ffd0d0; background: #fff6f6; color: #e64a4a; border-radius: 8px; padding: 8px 16px; font-size: 13px; cursor: pointer; }
-    .ops span { color: #627079; font-size: 13px; }
+    body {
+      font-family: "PingFang SC", "Microsoft YaHei", -apple-system, BlinkMacSystemFont, sans-serif;
+      color: #1e323f; background: #eaf3ff; min-height: 100vh; font-size: 14px;
+    }
+    button { font: inherit; cursor: pointer; }
+    .topbar {
+      height: 56px; display: flex; align-items: center; gap: 12px;
+      padding: 0 24px; background: #fff; border-bottom: 1px solid #d7e6f5;
+    }
+    .topbar img { width: 32px; height: 32px; }
+    .topbar h1 { font-size: 16px; font-weight: 700; letter-spacing: .5px; }
+    .topbar p { font-size: 12px; color: #627079; margin-top: 1px; }
+    .wrap { max-width: 1040px; margin: 0 auto; padding: 20px 24px 40px; }
+    .lead { font-size: 14px; line-height: 1.7; margin-bottom: 16px; }
+    .lead span { color: #627079; }
+    .roles { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+    .card {
+      background: #fff; border: 1px solid #d5e6f4; border-radius: 8px; padding: 16px 18px 14px;
+    }
+    .card--wide { grid-column: 1 / -1; }
+    .card__role { font-size: 12px; font-weight: 600; color: #3087cc; }
+    .card h2 { font-size: 18px; font-weight: 700; margin: 4px 0 2px; }
+    .card__meta { font-size: 13px; color: #627079; }
+    .card > p { color: #627079; font-size: 13px; line-height: 1.7; margin: 8px 0 12px; }
+    .ports { display: flex; flex-wrap: wrap; gap: 8px; }
+    .port {
+      height: 32px; padding: 0 14px; border-radius: 4px; border: 1px solid #3087cc;
+      background: #fff; color: #3087cc; font-size: 13px; font-weight: 600;
+    }
+    .port:hover { background: #f2f9fe; }
+    .port--primary {
+      border-color: transparent; color: #fff;
+      background: linear-gradient(90deg, #469fff, #065cf8);
+    }
+    .port--primary:hover { filter: brightness(1.05); background: linear-gradient(90deg, #469fff, #065cf8); }
+    .foot { margin-top: 16px; display: flex; align-items: center; gap: 12px; color: #627079; font-size: 13px; }
+    .foot button {
+      height: 30px; padding: 0 12px; border-radius: 4px; border: 1px solid #f3c2c2;
+      background: #fff; color: #d35656; font-size: 13px;
+    }
+    .foot button:hover { background: #fff6f6; }
+    @media (max-width: 760px) {
+      .roles { grid-template-columns: 1fr; }
+      .card--wide { grid-column: auto; }
+    }
   </style>
 </head>
 <body>
-  <div class="wrap">
-    <div class="brand"><img src="assets/pc/logo.svg" alt=""><div><h1>中南点点 · HTML 原型</h1><p>移动端 / PC 端 / 后台管理端，三端共用一份本地演示数据</p></div></div>
-    <div class="cards">
-      <div class="card"><span class="card__tag">uni-app H5</span><h2>移动端</h2>
-        <p>复刻 /ywViews/bbs/*：首页、发布、消息、我的四个 Tab，以及帖子详情、私信、草稿、举报与规则页。</p>
-        <ul><li>桌面浏览器显示手机外框，手机访问自动全屏</li><li>从智慧学工首页悬浮球进入</li></ul>
-        <a class="go" href="h5.html#/ywViews/bbs/home/index">打开移动端</a>
-        <div class="sub"><a href="h5.html#/pages/home">智慧学工首页入口</a><a href="h5.html#/ywViews/bbs/profile/index">我的</a></div></div>
-      <div class="card"><span class="card__tag">Vue3 + Element Plus</span><h2>PC 端</h2>
-        <p>复刻 /bbs/home/index：分类、排序、搜索、热议 TOP5、部门排行、帖子详情抽屉、发布、草稿、私信、举报记录。</p>
-        <ul><li>顶部导航沿用智慧学工外壳</li><li>右下角悬浮「中南点点」入口</li></ul>
-        <a class="go" href="pc.html#/bbs/home/index">打开 PC 端</a>
-        <div class="sub"><a href="pc.html#/bbs/post/publish">发布新帖</a><a href="pc.html#/bbs/profile/reports">我的举报</a></div></div>
-      <div class="card"><span class="card__tag">wk-Admin</span><h2>后台管理端</h2>
-        <p>复刻 /bbs/admin/*：数据概览、帖子管理、用户管理、部门管理、话题管理、高风险帖子与站外舆情。</p>
-        <ul><li>需要管理员身份（默认即为管理员）</li><li>处理结果实时同步到前台</li></ul>
-        <a class="go" href="pc.html#/bbs/admin/dashboard/index">打开管理端</a>
-        <div class="sub"><a href="pc.html#/bbs/admin/posts/index">帖子管理</a><a href="pc.html#/bbs/admin/risk-posts/index">高风险帖子</a><a href="pc.html#/bbs/admin/sentiment/external">站外舆情</a></div></div>
-    </div>
-    <div class="panel">
-      <h3>演示身份</h3>
-      <p>切换后三端同时生效。数据存放在浏览器 localStorage（键名 zndd_proto_db_v1），不连接任何线上接口。</p>
-      <div class="users" id="users"></div>
-      <div class="ops"><button id="reset">重置演示数据</button><span id="cur"></span></div>
-    </div>
-  </div>
+  <header class="topbar">
+    <img src="assets/pc/logo.svg" alt="">
+    <div><h1>中南点点</h1><p>演示入口</p></div>
+  </header>
+  <main class="wrap">
+    <p class="lead">点角色端口会以该身份打开。<span>三端共用本机演示数据。</span></p>
+    <div class="roles" id="roles"></div>
+    <div class="foot"><button type="button" id="reset">重置演示数据</button><span>恢复初始演示数据，已在浏览器里改过的内容会清掉。</span></div>
+  </main>
   <script src="js/store.js"></script>
   <script>
-    function render() {
-      var me = Store.me();
-      document.getElementById('users').innerHTML = Store.DEMO_USERS.map(function (u) {
-        return '<button data-id="' + u.id + '" class="' + (u.id === me.id ? 'is-cur' : '') + '">' + u.label + '</button>';
-      }).join('');
-      document.getElementById('cur').textContent = '当前：' + me.nc + (me.role === 'admin' ? '（管理员）' : '');
+    var ROLES = [
+      {
+        id: 'u101', role: '普通学生',
+        fit: '适合看认领进度、自己的寻物，以及同学发来的线索。她发布了寻物「白色耳机盒」，也提交过认领申请。',
+        ports: [
+          { port: 'h5-lost', label: '移动端 · 失物招领', primary: true },
+          { port: 'pc-lost', label: 'PC 前台 · 失物招领' }
+        ]
+      },
+      {
+        id: 'u103', role: '普通学生',
+        fit: '适合演示给别人的寻物提供线索。端口会打开林知夏发布的寻物「白色耳机盒」。',
+        ports: [
+          { port: 'h5-clue', label: '移动端 · 白色耳机盒', primary: true },
+          { port: 'pc-clue', label: 'PC 前台 · 白色耳机盒' }
+        ]
+      },
+      {
+        id: 'u_zz1', role: '资助团队 · 登记 + 核对',
+        fit: '可以登记物品，也可以核对称认领、安排交接。负责校本部、铁道校区、湘雅校区、天心校区、毓秀楼、雷锋岗。管理端侧栏只有「失物招领」。',
+        ports: [
+          { port: 'h5-work', label: '移动端 · 招领工作台' },
+          { port: 'pc-lost', label: 'PC 前台 · 失物招领' },
+          { port: 'pc-items', label: 'PC 管理端 · 失物台账', primary: true }
+        ]
+      },
+      {
+        id: 'u_zz2', role: '资助团队 · 仅新校区登记',
+        fit: '只能登记新校区服务点的物品，不能核对称认领。管理端台账只显示新校区服务点保管的物品。',
+        ports: [
+          { port: 'h5-work', label: '移动端 · 招领工作台' },
+          { port: 'pc-lost', label: 'PC 前台 · 失物招领' },
+          { port: 'pc-items', label: 'PC 管理端 · 失物台账', primary: true }
+        ]
+      },
+      {
+        id: 'u_admin', role: '超级管理员', wide: true,
+        fit: '可以进入全部后台，包括用户管理和「失物招领」。前台用来对照学生看到的页面。',
+        ports: [
+          { port: 'pc-users', label: 'PC 管理端 · 用户管理', primary: true },
+          { port: 'pc-items', label: 'PC 管理端 · 失物招领' },
+          { port: 'pc-home', label: 'PC 前台' }
+        ]
+      }
+    ];
+
+    function esc(s) {
+      return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) {
+        return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
+      });
     }
-    document.getElementById('users').addEventListener('click', function (e) {
-      var b = e.target.closest('button[data-id]');
-      if (b) Store.setCurrentUser(b.dataset.id);
+    function earId() {
+      var list = (Store.db && Store.db.lfItems) || [];
+      var it = list.find(function (x) { return x.lx === 'lost' && x.mc === '白色耳机盒'; });
+      return it ? it.id : '';
+    }
+    function dest(port) {
+      var id = earId();
+      if (port === 'h5-lost') return 'h5.html#/ywViews/bbs/lost/index';
+      if (port === 'pc-lost') return 'pc.html#/bbs/lost/index';
+      if (port === 'pc-home') return 'pc.html#/bbs/home/index';
+      if (port === 'h5-work') return 'h5.html#/ywViews/bbs/lost/work';
+      if (port === 'pc-items') return 'pc.html#/bbs/admin/lost/items';
+      if (port === 'pc-users') return 'pc.html#/bbs/admin/users/index';
+      if (port === 'h5-clue') return id ? 'h5.html#/ywViews/bbs/lost/detail?id=' + encodeURIComponent(id) : 'h5.html#/ywViews/bbs/lost/index?lx=lost';
+      if (port === 'pc-clue') return id ? 'pc.html#/bbs/lost/index?lx=lost&id=' + encodeURIComponent(id) : 'pc.html#/bbs/lost/index?lx=lost';
+      return 'index.html';
+    }
+    function render() {
+      document.getElementById('roles').innerHTML = ROLES.map(function (r) {
+        var u = Store.user(r.id) || { nc: r.id, xm: '', xh: '' };
+        return '<section class="card' + (r.wide ? ' card--wide' : '') + '">' +
+          '<div class="card__role">' + esc(r.role) + '</div>' +
+          '<h2>' + esc(u.nc) + '</h2>' +
+          '<div class="card__meta">' + esc(u.xm) + ' · ' + esc(u.xh) + '</div>' +
+          '<p>' + esc(r.fit) + '</p>' +
+          '<div class="ports">' + r.ports.map(function (p) {
+            return '<button type="button" class="port' + (p.primary ? ' port--primary' : '') + '" data-uid="' + esc(r.id) + '" data-port="' + esc(p.port) + '">' + esc(p.label) + '</button>';
+          }).join('') + '</div></section>';
+      }).join('');
+    }
+    document.getElementById('roles').addEventListener('click', function (e) {
+      var b = e.target.closest('button[data-uid]');
+      if (!b) return;
+      Store.setCurrentUser(b.getAttribute('data-uid'));
+      location.href = dest(b.getAttribute('data-port'));
     });
     document.getElementById('reset').addEventListener('click', function () {
-      if (window.confirm('将清空所有本地修改并恢复初始演示数据，是否继续？')) Store.reset();
+      if (window.confirm('将清空本机修改并恢复初始演示数据，是否继续？')) Store.reset();
     });
-    window.addEventListener('zndd:change', render);
     render();
   </script>
 </body>

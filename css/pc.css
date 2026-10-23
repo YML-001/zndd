@@ -149,6 +149,10 @@ a{color:#3087cc;text-decoration:none}
 .ui-dialog__close:hover{color:#3087cc}
 .ui-dialog__body{padding:.10417rem;overflow:auto;min-height:0}
 .dlg-foot{display:flex;justify-content:flex-end;gap:.05208rem;margin:.10417rem -.10417rem -.10417rem;padding:.07813rem .10417rem;border-top:.00521rem solid #eef3f6}
+.pm-send .ui-dialog__title{display:flex;flex-direction:column;align-items:flex-start;gap:.01042rem}
+.pm-send__user{display:flex;align-items:center;gap:.0625rem;height:.29167rem;margin-bottom:.08333rem;padding:0 .08333rem;border:.00521rem solid #dcdfe6;border-radius:.02083rem}
+.pm-send__user b{font-size:.08333rem;font-weight:500}
+.pm-send .textarea{min-height:.83333rem}
 .ui-layer--drawer{justify-content:flex-end;align-items:stretch}
 .ui-drawer{width:50vw;height:100%;max-height:none;background:#f6fcff;transform:translateX(100%);transition:transform .25s}
 .ui-layer.is-open .ui-drawer{transform:none}
@@ -215,6 +219,14 @@ a{color:#3087cc;text-decoration:none}
 .cat-bar__item{display:inline-flex;flex-shrink:0;align-items:center;gap:.05208rem;height:.26042rem;padding:0 .13021rem;border:none;border-radius:.28125rem;font-size:.09375rem;font-weight:700;color:#1e323f;background:linear-gradient(0deg,#fff,#eff8ff);transition:all .15s}
 .cat-bar__item img{width:.125rem;height:.125rem}
 .cat-bar__item.is-active{color:#fff;background:linear-gradient(270deg,#469fff,#065cf8)}
+.lost-entry{display:flex;align-items:center;gap:.0625rem;width:100%;height:.29167rem;margin:.02083rem 0 .08333rem;padding:0 .10417rem;border:none;border-radius:.04167rem;background:#fff;color:#1e323f;text-align:left;cursor:pointer}
+.lost-entry:hover{background:#f5fbff}
+.lost-entry img{width:.14583rem;height:.14583rem}
+.lost-entry__name{font-size:.08333rem;font-weight:700}
+.lost-entry__sub{font-size:.06771rem;color:#627079}
+.lost-entry__go{margin-left:auto;font-size:.07292rem;font-weight:600;color:#3087cc}
+.lost-entry.is-active{color:#fff;background:linear-gradient(270deg,#469fff,#065cf8);cursor:default}
+.lost-entry.is-active .lost-entry__sub{color:#ffffffd9}
 .publish-btn{position:relative;flex-shrink:0;width:.6875rem;height:.47917rem;border:none;background:none;padding:0;cursor:pointer}
 .publish-btn__anim{width:100%;height:100%;pointer-events:none}
 .publish-btn__fallback{position:absolute;left:.04167rem;right:.04167rem;bottom:.03125rem;height:.15625rem;border-radius:.52083rem;background:linear-gradient(135deg,#ff779d,#ed1c31);color:#fff;font-size:.07292rem;font-weight:700;display:flex;align-items:center;justify-content:center;gap:.02083rem;box-shadow:0 .02083rem .05208rem #ed1c3155}
@@ -495,6 +507,8 @@ button.pdd__action--warn:hover{color:#d84343}
 .rp-item__time{font-size:.0625rem;color:#1e323fb3}
 
 .rdd .ui-dialog{width:2.91667rem;border-radius:.0625rem}
+.rdd.rdd--lost .ui-dialog{width:6.4rem}
+.rp-page .post-card{border:.00521rem solid #e3f1f9}
 .rdd__body{display:flex;flex-direction:column;gap:.10417rem}
 .rdd__banner{display:flex;align-items:flex-start;gap:.05208rem;padding:.07292rem .08333rem;border-radius:.04167rem;background:#eafaf2}
 .rdd__banner--pending{background:#fff7e8}

@@ -10,6 +10,9 @@
 .aside-item.is-active{background:#fff3;font-weight:700}
 .aside-item__ico{width:.08333rem;height:.08333rem;border-radius:50%;background:#e3f1f9;position:relative;flex-shrink:0}
 .aside-item__ico::after{content:"";position:absolute;inset:.02083rem;border-radius:50%;background:#458fd8}
+.aside-group{display:flex;align-items:center;gap:.02604rem;height:.14583rem;margin-top:.01563rem;padding:0 .03906rem;font-size:.0625rem;font-weight:700;color:#e3f1f9;cursor:default}
+.aside-group i{width:.01563rem;height:.05208rem;border-radius:.0625rem;background:#e3f1f9;flex-shrink:0}
+.aside-item--sub{padding-left:.09115rem}
 .admin-content{flex:1;min-width:0;display:flex;flex-direction:column;gap:.04167rem;min-height:0}
 .tag-wrap{flex-shrink:0;display:flex;align-items:flex-end;height:.15625rem;padding:0 .04167rem;background:#fff;border-radius:.03125rem .03125rem 0 0;border-bottom:.00521rem solid #c7e1f0}
 .tag-wrap__back{display:inline-flex;align-items:center;gap:.01042rem;height:100%;padding:0 .05208rem;border:none;border-right:.00521rem solid #eef3f6;background:none;color:#afafaf;font-size:.0625rem}

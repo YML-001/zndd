@@ -10,7 +10,8 @@
     chat: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12a8 8 0 01-11.6 7.1L4 20l1-4.4A8 8 0 1121 12z"/><path d="M8 12h.01M12 12h.01M16 12h.01"/></svg>',
     ban: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M8 8l8 8M16 8l-8 8"/></svg>',
     info: '<svg width="12" height="12" viewBox="0 0 24 24" fill="#9096a2"><circle cx="12" cy="12" r="10"/><path d="M12 11v6M12 7.5v.5" stroke="#fff" stroke-width="2"/></svg>',
-    search: '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg>'
+    search: '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg>',
+    clock: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>'
   };
   const opts = (list, v) => list.map(([k, t]) => `<option value="${k}" ${String(k) === String(v) ? 'selected' : ''}>${t}</option>`).join('');
   const fItem = (label, ctrl, cls = '') => `<label class="filter__item ${cls}"><span class="filter__label">${label}</span>${ctrl}</label>`;
@@ -271,6 +272,26 @@
   };
 
   /* ---------- 用户管理 ---------- */
+  function openAdminPm(uid) {
+    const u = S.user(uid);
+    if (!u) { toast('无法获取用户信息', 'error'); return; }
+    if (uid === S.me().id) { toast('不能给自己发私信', 'warning'); return; }
+    UI.open({
+      kind: 'dialog', cls: 'pm-send', title: '发送私信<span class="underline-deco"></span>', width: '2.5rem',
+      render: () => `<div class="pm-send__user">${avatar(u, 'avatar--md')}<b>${esc(u.nc)}</b></div>
+        <textarea class="textarea" rows="6" maxlength="500" data-keep="pm" placeholder="请输入你的内容"></textarea>
+        <div class="dlg-foot"><button class="btn" data-close>取消</button><button class="btn btn--primary" data-send>立即发送</button></div>`,
+      on: {
+        'click [data-send]': (e, el, l) => {
+          const v = l.body.querySelector('textarea').value;
+          if (!v.trim()) { toast('请输入你的内容', 'warning'); return; }
+          S.sendMessage(uid, v);
+          toast('私信已发送', 'success');
+          l.close();
+        }
+      }
+    });
+  }
   function openBan(uid) {
     const u = S.user(uid);
     UI.open({
@@ -295,22 +316,85 @@
       }
     });
   }
-  function openCertify(uid) {
-    const u = S.user(uid);
+  /* 官方认证只留在本页示意：科室来自部门管理，资助团队可同时勾选。不写回成员权限，也不改已发布物品上的标签 */
+  const TEAM_DEMO = ['u_zz1', 'u_zz2'];
+  function certDepts() {
+    return S.db.depts.filter(d => d.zt === '1').sort((a, b) => a.px - b.px);
+  }
+  function certDeptName(id) {
+    const d = id && S.dept(id);
+    return d && d.zt === '1' && d.bmmc !== '无' ? d.bmmc : '';
+  }
+  function certRec(st, id) {
+    return st.cert[id] || { deptId: '', team: false };
+  }
+  function certOn(c) {
+    return !!(c && (certDeptName(c.deptId) || c.team));
+  }
+  function certCell(c) {
+    if (!certOn(c)) return '<span class="status-tag status-tag--gray">未认证</span>';
+    const name = certDeptName(c.deptId);
+    const tags = [];
+    if (name) tags.push(`<span class="status-tag status-tag--blue">${esc(name)}</span>`);
+    if (c.team) tags.push('<span class="status-tag status-tag--blue">资助团队</span>');
+    return `<span style="display:inline-flex;gap:.03125rem;align-items:center;white-space:nowrap">${tags.join('')}</span>`;
+  }
+  function demoCert() {
+    const cert = {};
+    TEAM_DEMO.forEach(id => {
+      const u = S.user(id);
+      const name = certDeptName(u && u.rzbmid);
+      cert[id] = { deptId: name ? u.rzbmid : '', team: true };
+    });
+    return cert;
+  }
+  function userRows(st) {
+    const f = st.f;
+    let all = S.adminUsers(Object.assign({}, f, { sfgf: '' }));
+    if (f.sfgf === '1') all = all.filter(u => certOn(certRec(st, u.id)));
+    else if (f.sfgf === '0') all = all.filter(u => !certOn(certRec(st, u.id)));
+    const pin = u => TEAM_DEMO.includes(u.id) && certOn(certRec(st, u.id));
+    all.sort((a, b) => (pin(b) - pin(a)) || b.cjsj - a.cjsj);
+    return all;
+  }
+  function openCert(st, uid) {
+    const cur = certRec(st, uid);
     UI.open({
       kind: 'dialog', title: '认证', width: '2.6rem',
-      render: () => `<div class="form"><div class="form-item"><label class="form-item__label">认证部门</label><div class="form-item__ctrl">
-        <select class="select" data-dept><option value="">请选择：选「无」或清空则取消认证</option>${S.db.depts.filter(d => d.zt === '1').sort((a, b) => a.px - b.px).map(d => `<option value="${d.bmmc === '无' ? '' : d.id}" ${u.rzbmid === d.id ? 'selected' : ''}>${esc(d.bmmc)}</option>`).join('')}</select>
-        <div class="form-item__hint">提示：认证部门选择「无」或清空，则取消官方认证标识</div></div></div></div>
-        <div class="dlg-foot"><button class="btn" data-close>取消</button><button class="btn btn--primary" data-ok>确定</button></div>`,
-      on: { 'click [data-ok]': (e, el, l) => { const v = l.body.querySelector('[data-dept]').value; S.certifyUser(uid, v); toast(v ? '已更新认证' : '已设为未认证', 'success'); l.close(); } }
+      state: { deptId: cur.deptId || '', team: !!cur.team },
+      render: l => `<div class="form">
+        <div class="form-item"><label class="form-item__label">科室</label><div class="form-item__ctrl">
+          <div class="radio-group" style="padding-top:.04167rem">${certDepts().map(d => `<label class="radio"><input type="radio" name="cert-dept" value="${d.id}" ${l.state.deptId === d.id ? 'checked' : ''}>${esc(d.bmmc)}</label>`).join('')}</div>
+          <div class="form-item__hint">名单与部门管理一致，单选。「无」表示不认证科室，可与资助团队同时选择；再次点击已选项可取消。</div>
+        </div></div>
+        <div class="form-item"><label class="form-item__label">资助团队</label><div class="form-item__ctrl" style="height:.16667rem;display:flex;align-items:center"><label class="check"><input type="checkbox" data-team ${l.state.team ? 'checked' : ''}>资助团队</label></div></div>
+      </div>
+      <div class="dlg-foot"><button class="btn" data-close>取消</button><button class="btn btn--primary" data-ok>确定</button></div>`,
+      on: {
+        'click input[name="cert-dept"]': (e, el, l) => {
+          if (l.state.deptId === el.value) { el.checked = false; l.state.deptId = ''; }
+          else l.state.deptId = el.value;
+        },
+        'change [data-team]': (e, el, l) => { l.state.team = el.checked; },
+        'click [data-ok]': (e, el, l) => {
+          const picked = l.body.querySelector('input[name="cert-dept"]:checked');
+          let deptId = picked ? picked.value : '';
+          if (!certDeptName(deptId)) deptId = '';
+          const team = !!l.body.querySelector('[data-team]').checked;
+          if (!deptId && !team) { toast('请先选择科室或资助团队', 'warning'); return; }
+          st.cert[uid] = { deptId, team };
+          toast('已更新认证', 'success');
+          l.close();
+          PC.refresh();
+        }
+      }
     });
   }
   PC.pages['/bbs/admin/users/index'] = {
     admin: true, title: '用户管理',
-    init: q => ({ f: { nc: '', xm: '', xh: '', bm: '', zt: q.zt || '', sfgf: '' }, page: 1, pageSize: 15 }),
+    init: q => ({ f: { nc: '', xm: '', xh: '', bm: '', zt: q.zt || '', sfgf: '' }, page: 1, pageSize: 15, cert: demoCert() }),
     render(st) {
-      const f = st.f, all = S.adminUsers(f), list = page(all, st);
+      const f = st.f, all = userRows(st), list = page(all, st);
       return `<div class="panel"><div class="filter">
           ${fItem('用户昵称', `<input class="input" data-f="nc" placeholder="请输入" value="${esc(f.nc)}">`)}
           ${fItem('真实姓名', `<input class="input" data-f="xm" placeholder="请输入" value="${esc(f.xm)}">`)}
@@ -322,24 +406,37 @@
         </div></div>
         <div class="panel panel--grow"><div class="table-wrap"><table class="table table--admin">
           <thead><tr><th>序号</th><th>用户昵称</th><th>真实姓名</th><th>真实学号/工号</th><th>所在部门/年级</th><th>状态</th><th>官方认证</th><th>数据</th><th>注册时间</th><th class="col-fixed">操作</th></tr></thead>
-          <tbody>${list.length ? list.map((u, i) => `<tr>
+          <tbody>${list.length ? list.map((u, i) => {
+            const c = certRec(st, u.id), on = certOn(c);
+            return `<tr data-uid="${u.id}">
             <td>${(st.page - 1) * st.pageSize + i + 1}</td><td>${esc(u.nc)}</td><td>${esc(u.xm)}</td><td>${esc(u.xh)}</td><td>${esc(u.bmmc)}${u.nj ? ' / ' + esc(u.nj) : ''}</td>
             <td>${u.banned ? `<span class="status-tag status-tag--reported" title="${esc(u.fjyy || '')}">封禁中</span>` : '<span class="status-tag status-tag--normal">正常</span>'}</td>
-            <td>${u.sfgf === '1' ? `<span class="status-tag status-tag--blue">${esc(u.rzbmmc)}</span>` : '<span class="status-tag status-tag--gray">未认证</span>'}</td>
+            <td>${certCell(c)}</td>
             <td style="white-space:nowrap">发帖：${u.ftzsl}｜回复：${u.hfsl}</td><td style="white-space:nowrap">${S.fmtDateTime(u.cjsj)}</td>
-            <td class="col-fixed"><div class="ops">${u.banned ? `<button class="btn-link btn-link--success" data-unban="${u.id}">解封</button>` : `<button class="btn-link btn-link--danger" data-ban="${u.id}" ${u.id === S.me().id ? 'disabled title="不能封禁当前登录账号"' : ''}>封禁</button>`}<button class="btn-link" data-cert="${u.id}">认证</button></div></td>
-          </tr>`).join('') : '<tr class="table__empty"><td colspan="10">暂无数据</td></tr>'}</tbody></table></div>
+            <td class="col-fixed"><div class="ops"><button class="btn-link" data-pm="${u.id}" ${u.id === S.me().id ? 'disabled title="不能给自己发私信"' : ''}>私信</button>${u.banned ? `<button class="btn-link btn-link--success" data-unban="${u.id}">解封</button>` : `<button class="btn-link btn-link--danger" data-ban="${u.id}" ${u.id === S.me().id ? 'disabled title="不能封禁当前登录账号"' : ''}>封禁</button>`}${on ? `<button class="btn-link" data-cert="${u.id}">调整</button><button class="btn-link" data-uncert="${u.id}">取消认证</button>` : `<button class="btn-link" data-cert="${u.id}">认证</button>`}</div></td>
+          </tr>`;
+          }).join('') : '<tr class="table__empty"><td colspan="10">暂无数据</td></tr>'}</tbody></table></div>
           ${PC.pager(all.length, st.page, st.pageSize)}</div>`;
     },
     bind(root, st) {
       UI.delegate(root, 'click', '[data-act]', (e, el) => {
-        if (el.dataset.act === 'query') st.f = readFilter(root);
-        else st.f = { nc: '', xm: '', xh: '', bm: '', zt: '', sfgf: '' };
+        st.f = el.dataset.act === 'query' ? readFilter(root) : { nc: '', xm: '', xh: '', bm: '', zt: '', sfgf: '' };
         st.page = 1; PC.refresh();
       });
+      UI.delegate(root, 'click', '[data-pm]', (e, el) => openAdminPm(el.dataset.pm));
       UI.delegate(root, 'click', '[data-ban]', (e, el) => openBan(el.dataset.ban));
       UI.delegate(root, 'click', '[data-unban]', (e, el) => UI.confirm('确认解除该用户的封禁？').then(ok => { if (ok) { S.unbanUser(el.dataset.unban); toast('已解封', 'success'); } }));
-      UI.delegate(root, 'click', '[data-cert]', (e, el) => openCertify(el.dataset.cert));
+      UI.delegate(root, 'click', '[data-cert]', (e, el) => openCert(st, el.dataset.cert));
+      UI.delegate(root, 'click', '[data-uncert]', UI.guard(async (e, el) => {
+        const id = el.dataset.uncert;
+        const u = S.user(id);
+        const name = u ? (u.xm || u.nc) : '该用户';
+        const ok = await UI.confirm(`确认取消「${name}」的官方认证？`, { title: '取消认证', ok: '取消认证', danger: true });
+        if (!ok) return;
+        delete st.cert[id];
+        toast('已取消认证', 'success');
+        PC.refresh();
+      }));
       PC.bindPager(root, st, PC.refresh);
     }
   };
@@ -659,6 +756,479 @@
         });
       });
       PC.bindPager(root, st, PC.refresh);
+    }
+  };
+
+  /* ---------- 失物招领 · 管理端 ---------- */
+  const LOST = '/bbs/admin/lost';
+  const lfTag = x => `<span class="status-tag status-tag--${LF.adminTag(x.tone)}">${esc(x.ztLabel)}</span>`;
+  const XQOPT = [['', '全部']].concat(S.LF_XQ.map(x => [x, x]));
+  const FLOPT = [['', '全部']].concat(S.LF_FL.map(x => [x.value, x.label]));
+  const dayStart = s => s ? new Date(s + 'T00:00:00').getTime() : 0;
+  const dayEnd = s => s ? new Date(s + 'T23:59:59').getTime() : 0;
+  const claimLinks = c => {
+    const b = (act, label, cls = '') => `<button class="btn-link ${cls}" data-lfc="${act}" data-cid="${c.id}">${label}</button>`;
+    if (c.zt === 'pending') return b('pass', '通过', 'btn-link--success') + b('more', '要求补充', 'btn-link--warn') + b('reject', '不通过', 'btn-link--danger') + b('pm', '私信');
+    if (c.zt === 'more') return b('reject', '不通过', 'btn-link--danger') + b('pm', '私信');
+    if (c.zt === 'pass') return b('hand', c.jj ? '重新安排' : '安排交接') + b('done', '确认归还', 'btn-link--success') + b('pm', '私信');
+    return '<span class="c-light">—</span>';
+  };
+
+  // 认领申请列表：itemId 为空时显示全部待处理
+  function openClaimQueue(itemId) {
+    UI.open({
+      kind: 'dialog', title: itemId ? '认领申请' : '待处理的认领申请', width: '6.4rem', state: { zt: '' },
+      render: l => {
+        const it = itemId ? S.lfGet(itemId) : null;
+        const all = itemId ? S.lfClaimsOf(itemId) : S.lfReviewQueue({ team: true });
+        const list = l.state.zt ? all.filter(c => c.zt === l.state.zt) : all;
+        return `${it ? `<div class="info-grid" style="margin-bottom:.0625rem"><div class="info-grid__cell"><b>物品：</b>${esc(it.mc)}</div><div class="info-grid__cell"><b>信息编号：</b>${esc(it.bh)}</div>
+            <div class="info-grid__cell"><b>保管：</b>${esc(it.bgText)}</div><div class="info-grid__cell"><b>状态：</b>${lfTag(it)}</div></div>` : ''}
+          <div class="filter" style="margin-bottom:.05208rem">${fItem('申请状态', `<select class="select" data-zt>${opts([['', '全部']].concat(Object.entries(S.LF_CLAIM_ZT).map(([k, v]) => [k, v.label])), l.state.zt)}</select>`)}</div>
+          <div class="table-wrap" style="max-height:3rem"><table class="table table--admin">
+            <thead><tr><th>申请人</th>${itemId ? '' : '<th>物品</th>'}<th>归属特征</th><th>丢失时间地点</th><th>材料</th><th>状态</th><th>申请时间</th><th class="col-fixed">操作</th></tr></thead>
+            <tbody>${list.length ? list.map(c => `<tr><td>${esc(c.sqr.nc)}<div class="c-light">${esc(c.sqr.xm || '')} ${esc(c.sqr.xh || '')}</div></td>
+              ${itemId ? '' : `<td><button class="btn-link" data-item="${c.itemId}">${esc(c.item.mc)}</button></td>`}
+              <td><div style="max-width:2rem;white-space:normal">${esc(c.tz)}${c.zt === 'more' ? `<div class="c-warn">已要求补充：${esc(c.bcyq)}</div>` : ''}${c.jj ? `<div class="c-muted">交接：${esc(c.jj.dd)} · ${esc(c.jj.sj)}</div>` : ''}</div></td>
+              <td>${esc(c.sjdd)}</td><td>${c.tps.length ? `<button class="btn-link" data-imgs="${c.id}">${c.tps.length} 张</button>` : '—'}</td>
+              <td><span class="status-tag status-tag--${LF.adminTag(c.tone)}">${esc(c.ztLabel)}</span></td><td style="white-space:nowrap">${S.fmtDateTime(c.cjsj)}</td>
+              <td class="col-fixed"><div class="ops">${claimLinks(c)}</div></td></tr>`).join('') : `<tr class="table__empty"><td colspan="${itemId ? 7 : 8}">暂无认领申请</td></tr>`}</tbody></table></div>
+          <div class="dlg-foot"><button class="btn btn--primary" data-close>关闭</button></div>`;
+      },
+      on: {
+        'change [data-zt]': (e, el, l) => { l.state.zt = el.value; l.refresh(); },
+        'click [data-lfc]': (e, el) => PC.lfClaimAct(el.dataset.lfc, el.dataset.cid),
+        'click [data-item]': (e, el) => PC.openLost(el.dataset.item),
+        'click [data-imgs]': (e, el) => { const c = S.lfClaimGet(el.dataset.imgs); UI.preview(imgSrc(c.tps[0])); }
+      }
+    });
+  }
+
+  /* 失物台账 */
+  PC.pages[LOST + '/items'] = {
+    admin: true, lost: true, title: '失物台账',
+    init: q => ({ f: { kw: '', xq: '', fl: '', bgdid: '', zt: q.zt || '', start: '', end: '' }, sel: [], expand: false, page: 1, pageSize: 15 }),
+    query(st) { const f = st.f; return S.lfAdminItems(Object.assign({}, f, { start: dayStart(f.start), end: dayEnd(f.end) })); },
+    render(st) {
+      const all = this.query(st), list = page(all, st), f = st.f, s = S.lfStats();
+      const pts = S.lfMyPoints();
+      const kpi = (tone, icon, title, val, go, sub = '') => `<div class="kpi-card kpi-card--${tone} kpi-card--click" data-go="${go}"><span class="kpi-card__blob"></span><span class="kpi-card__icon">${icon}</span>
+        <div class="kpi-card__title">${title}${sub ? `<span class="kpi-card__sub">${sub}</span>` : ''}</div><div class="kpi-card__value">${val}</div></div>`;
+      const sel = new Set(st.sel.filter(id => list.some(x => x.id === id)));
+      const ZTOPT = [['', '全部'], ['pending', '待认领'], ['checking', '核对中'], ['returned', '已归还'], ['withdrawn', '已撤回'], ['expired', '因时间久远已处理'], ['idle', '超 30 天未领']];
+      return `<div class="kpi-panel"><div class="kpi-row">
+          ${kpi('blue', IC.doc, '待认领', s.pending, 'pending')}
+          ${kpi('cyan', IC.trend, '今日登记', s.todayNew, 'today', `今日归还 ${s.todayReturned}`)}
+          ${kpi('orange', IC.chat, '待核对认领', s.claims, 'claims')}
+          ${kpi('red', IC.clock, '超 30 天未领', s.idle, 'idle')}
+        </div></div>
+        <div class="panel"><div class="filter">
+          ${fItem('关键词', `<input class="input" data-f="kw" placeholder="编号 / 物品 / 持卡人" value="${esc(f.kw)}">`)}
+          ${fItem('校区', `<select class="select" data-f="xq">${opts(XQOPT, f.xq)}</select>`)}
+          ${fItem('物品种类', `<select class="select" data-f="fl">${opts(FLOPT, f.fl)}</select>`)}
+          ${fItem('当前状态', `<select class="select" data-f="zt">${opts(ZTOPT, f.zt)}</select>`)}
+          ${st.expand ? fItem('保管服务点', `<select class="select" data-f="bgdid">${opts([['', '全部']].concat(pts.map(p => [p.id, esc(p.mc)])), f.bgdid)}</select>`) + fItem('登记日期', `<input class="input" type="date" data-f="start" value="${f.start}"><span class="filter__sep">-</span><input class="input" type="date" data-f="end" value="${f.end}">`, 'filter__item--wide') : ''}
+          <div class="filter__ops"><button class="filter__toggle" data-act="expand">${st.expand ? '收起' : '展开'}<svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="${st.expand ? 'M6 15l6-6 6 6' : 'M6 9l6 6 6-6'}"/></svg></button>
+            <button class="btn btn--primary" data-act="query">${IC.search}立即查询</button><button class="btn btn--plain" data-act="reset">重置</button></div>
+        </div></div>
+        <div class="panel panel--grow">
+          <div class="toolbar" style="margin-bottom:.05208rem"><span class="c-muted" style="font-size:.0625rem">共 ${all.length} 件${sel.size ? `，已选 ${sel.size} 件` : ''}</span>
+            <div class="toolbar__ops">${S.lfCan('register') ? '<button class="btn btn--primary" data-act="add">登记物品</button><button class="btn btn--plain" data-act="batch">批量登记</button>' : ''}
+              <button class="btn btn--plain" data-act="return" ${sel.size ? '' : 'disabled'}>批量归还</button><button class="btn btn--plain" data-act="export">导出</button></div></div>
+          <div class="table-wrap"><table class="table table--admin">
+          <thead><tr><th class="col-chk"><input type="checkbox" data-all ${list.length && list.every(x => sel.has(x.id)) ? 'checked' : ''}></th><th>序号</th><th>信息编号</th><th>物品名称</th><th>种类</th><th>校区</th><th>捡到地点</th><th>保管</th><th>来源</th><th>认领</th><th>状态</th><th>登记时间</th><th class="col-fixed">操作</th></tr></thead>
+          <tbody>${list.length ? list.map((it, i) => `<tr>
+            <td class="col-chk"><input type="checkbox" data-sel="${it.id}" ${sel.has(it.id) ? 'checked' : ''} ${['pending', 'checking'].includes(it.ztKey) ? '' : 'disabled'}></td>
+            <td>${(st.page - 1) * st.pageSize + i + 1}</td><td style="white-space:nowrap">${esc(it.bh)}</td>
+            <td><div class="ellipsis" style="max-width:1rem" title="${esc(it.mc)}">${esc(it.mc)}</div>${it.card ? `<div class="c-light">${esc(it.card.xm)} ${esc(it.card.xh)}</div>` : ''}</td>
+            <td><span class="status-tag status-tag--gray">${esc(it.flLabel)}</span></td><td>${esc(it.xq)}</td><td><div class="ellipsis" style="max-width:.9rem" title="${esc(it.dd)}">${esc(it.dd)}</div></td>
+            <td>${esc(it.bgText)}</td><td>${it.isTeam ? `${LF.teamBadge(it, 'admin')}<div class="c-light">${esc(it.fbrnc)}</div>` : '同学转交'}</td>
+            <td>${it.claimN ? `<button class="btn-link btn-link--warn" data-claims="${it.id}">${it.claimN} 条处理中</button>` : S.db.lfClaims.some(c => c.itemId === it.id) ? `<button class="btn-link" data-claims="${it.id}">查看</button>` : '—'}</td>
+            <td>${lfTag(it)}${it.longIdle ? ' <span class="status-tag status-tag--reported">超 30 天</span>' : ''}</td><td style="white-space:nowrap">${S.fmtDateTime(it.fbsj)}</td>
+            <td class="col-fixed"><div class="ops"><button class="btn-link" data-detail="${it.id}">详情</button>
+              ${!it.closed && it.canEdit ? `<button class="btn-link" data-edit="${it.id}">编辑</button><button class="btn-link" data-move="${it.id}">变更保管点</button>` : ''}
+              ${!it.closed && it.canReturn ? `<button class="btn-link btn-link--success" data-ret="${it.id}">归还</button>` : ''}
+              ${!it.closed && it.canEdit ? `<button class="btn-link btn-link--danger" data-wd="${it.id}">撤回</button>` : ''}</div></td>
+          </tr>`).join('') : '<tr class="table__empty"><td colspan="13">暂无数据</td></tr>'}</tbody></table></div>
+          ${PC.pager(all.length, st.page, st.pageSize, 'page', [10, 15, 20, 50])}</div>`;
+    },
+    bind(root, st) {
+      const self = this;
+      UI.delegate(root, 'click', '[data-go]', (e, el) => {
+        const g = el.dataset.go;
+        if (g === 'claims') { openClaimQueue(); return; }
+        const today = S.fmtDate(Date.now());
+        st.f = { kw: '', xq: '', fl: '', bgdid: '', zt: g === 'today' ? '' : g, start: g === 'today' ? today : '', end: g === 'today' ? today : '' };
+        st.expand = g === 'today'; st.page = 1; PC.refresh();
+      });
+      UI.delegate(root, 'click', '[data-act]', UI.guard(async (e, el) => {
+        const a = el.dataset.act;
+        if (a === 'expand') { st.f = Object.assign(st.f, readFilter(root)); st.expand = !st.expand; PC.refresh(); }
+        else if (a === 'query') { st.f = Object.assign(st.f, readFilter(root)); st.page = 1; PC.refresh(); }
+        else if (a === 'reset') { st.f = { kw: '', xq: '', fl: '', bgdid: '', zt: '', start: '', end: '' }; st.page = 1; PC.refresh(); }
+        else if (a === 'add') PC.go('/bbs/lost/publish', { team: 1 });
+        else if (a === 'batch') PC.go(LOST + '/register');
+        else if (a === 'return') {
+          if (!st.sel.length) return;
+          if (await UI.confirm(`确认已将选中的 ${st.sel.length} 件物品线下归还失主？未处理的认领申请会自动关闭。`, { title: '批量归还', ok: '确认归还' })) {
+            S.lfReturn(st.sel, { note: '线下领取' }); toast(`已归还 ${st.sel.length} 件`, 'success'); st.sel = [];
+          }
+        } else if (a === 'export') {
+          const rows = self.query(st);
+          download('失物台账.csv', [['信息编号', '物品名称', '种类', '校区', '捡到地点', '保管', '来源', '发布人', '状态', '登记时间']].concat(rows.map(it => [it.bh, it.mc, it.flLabel, it.xq, it.dd, it.bgText, it.isTeam ? '资助团队' : '同学转交', it.fbrnc, it.ztLabel, S.fmtDateTime(it.fbsj)])));
+          toast('已导出 ' + rows.length + ' 条', 'success');
+        }
+      }));
+      UI.delegate(root, 'change', '[data-sel]', (e, el) => {
+        const id = el.dataset.sel;
+        st.sel = el.checked ? st.sel.concat(id) : st.sel.filter(x => x !== id); PC.refresh();
+      });
+      UI.delegate(root, 'change', '[data-all]', (e, el) => {
+        const ids = page(self.query(st), st).filter(x => ['pending', 'checking'].includes(x.ztKey)).map(x => x.id);
+        st.sel = el.checked ? [...new Set(st.sel.concat(ids))] : st.sel.filter(x => !ids.includes(x)); PC.refresh();
+      });
+      UI.delegate(root, 'click', '[data-detail]', (e, el) => PC.openLost(el.dataset.detail));
+      UI.delegate(root, 'click', '[data-claims]', (e, el) => openClaimQueue(el.dataset.claims));
+      UI.delegate(root, 'click', '[data-edit]', (e, el) => PC.go('/bbs/lost/publish', { id: el.dataset.edit }));
+      UI.delegate(root, 'click', '[data-move]', (e, el) => openMovePoint(el.dataset.move));
+      UI.delegate(root, 'click', '[data-ret]', UI.guard(async (e, el) => {
+        if (await UI.confirm('确认物品已线下归还失主？确认后状态变为「已归还」，未处理的认领申请会自动关闭。', { title: '确认归还' })) { S.lfReturn([el.dataset.ret], { note: '线下领取' }); toast('已归还', 'success'); }
+      }));
+      UI.delegate(root, 'click', '[data-wd]', (e, el) => PC.openTextDialog({ title: '撤回信息', label: '请选择或填写撤回原因', quick: ['信息登记有误', '重复登记', '物品已由失主直接取回'], ok: '确认撤回', onOk: v => { S.lfWithdraw(el.dataset.wd, v); toast('已撤回', 'success'); } }));
+      PC.bindPager(root, st, PC.refresh);
+    }
+  };
+  function openMovePoint(id) {
+    const it = S.lfGet(id);
+    UI.open({
+      kind: 'dialog', title: '变更保管点', width: '4.2rem',
+      render: () => `<div class="form">
+        <div class="form-item"><label class="form-item__label">当前保管</label><div class="form-item__ctrl" style="line-height:.16667rem">${esc(it.bgText)}</div></div>
+        <div class="form-item"><label class="form-item__label req">变更为</label><div class="form-item__ctrl"><select class="select" data-p>${opts([['', '请选择服务点']].concat(S.lfPoints().filter(p => p.id !== it.bgdid).map(p => [p.id, esc(p.mc)])), '')}</select>
+          <div class="form-item__hint">变更记录会写入处理记录，认领人看到的领取地点同步更新</div></div></div></div>
+        <div class="dlg-foot"><button class="btn" data-close>取消</button><button class="btn btn--primary" data-ok>确定</button></div>`,
+      on: {
+        'click [data-ok]': (e, el, l) => {
+          const v = l.body.querySelector('[data-p]').value;
+          if (!v) { toast('请选择服务点', 'warning'); return; }
+          if (it.bgfs === 'self') S.lfTransfer(id, v); else S.lfUpdate(id, { bgfs: 'point', bgdid: v });
+          toast('已变更保管点', 'success'); l.close();
+        }
+      }
+    });
+  }
+
+  /* 批量登记 */
+  const newRow = def => ({ fl: 'daily', mc: '', xq: def.xq || '', dd: '', nr: '' });
+  PC.pages[LOST + '/register'] = {
+    admin: true, lost: true, title: '批量登记',
+    init() {
+      const p = S.lfMyPoints()[0];
+      const def = { bgdid: p ? p.id : '', xq: p ? p.xq : '', dd: '', rq: S.fmtDate(Date.now()) };
+      return { mode: 'card', def, text: '', parsed: null, rows: [newRow(def), newRow(def), newRow(def)] };
+    },
+    render(st) {
+      const pts = S.lfMyPoints(), d = st.def;
+      if (!S.lfCan('register')) return '<div class="warn-bar">⚠ 当前账号没有资助团队登记权限，不能登记团队物品。</div>';
+      const okN = st.parsed ? st.parsed.filter(r => r.ok).length : 0;
+      return `<div class="panel"><div class="filter">
+          ${fItem('登记方式', `<select class="select" data-mode>${opts([['card', '校园卡批量'], ['other', '其他物品']], st.mode)}</select>`)}
+          ${fItem('保管服务点', `<select class="select" data-d="bgdid">${opts(pts.map(p => [p.id, esc(p.mc)]), d.bgdid)}</select>`)}
+          ${fItem('默认校区', `<select class="select" data-d="xq">${opts([['', '请选择']].concat(S.LF_XQ.map(x => [x, x])), d.xq)}</select>`)}
+          ${fItem('捡到日期', `<input class="input" type="date" data-d="rq" max="${S.fmtDate(Date.now())}" value="${d.rq}">`)}
+          ${fItem('默认地点', `<input class="input" data-d="dd" placeholder="如：图书馆值班台（选填）" value="${esc(d.dd)}">`, 'filter__item--wide')}
+        </div></div>
+        ${st.mode === 'card' ? `<div class="panel">
+          <div class="sec-title" style="margin-top:0">粘贴校园卡信息</div>
+          <textarea class="textarea" rows="6" data-keep="cards" placeholder="每行一张卡，姓名、学号、学院、校区用空格隔开，例如：&#10;王子墨 8225130103 冶金与环境学院 本部&#10;陈思远 8209220311 商学院 新校">${esc(st.text)}</textarea>
+          <div class="toolbar" style="margin-top:.05208rem"><span class="c-light" style="font-size:.0625rem">自动识别姓名、学号、学院和校区；校区可写简称（本部、新校、铁道…），未写时使用默认校区</span>
+            <div class="toolbar__ops"><button class="btn btn--plain" data-act="sample">填入示例</button><button class="btn btn--primary" data-act="parse">识别</button></div></div>
+        </div>
+        ${st.parsed ? `<div class="panel panel--grow">
+          <div class="toolbar" style="margin-bottom:.05208rem"><span class="c-muted" style="font-size:.0625rem">共 ${st.parsed.length} 行，可登记 ${okN} 张${st.parsed.length - okN ? `，<span class="c-danger">${st.parsed.length - okN} 行需修改</span>` : ''}</span>
+            <div class="toolbar__ops"><button class="btn btn--primary" data-act="submitCards" ${okN ? '' : 'disabled'}>确认登记 ${okN} 张</button></div></div>
+          <div class="table-wrap"><table class="table table--admin"><thead><tr><th>序号</th><th>原始内容</th><th>姓名</th><th>学号</th><th>学院</th><th>校区</th><th>前台显示</th><th>识别结果</th></tr></thead>
+          <tbody>${st.parsed.map((r, i) => `<tr><td>${i + 1}</td><td><div class="ellipsis" style="max-width:1.4rem" title="${esc(r.line)}">${esc(r.line)}</div></td><td>${esc(r.xm || '—')}</td><td>${esc(r.xh || '—')}</td><td>${esc(r.xy || '—')}</td><td>${esc(r.xq || '—')}</td>
+            <td>${r.xm ? '校园卡 · ' + esc(S.maskName(r.xm)) : '—'}</td><td>${r.ok ? '<span class="status-tag status-tag--normal">可登记</span>' : `<span class="status-tag status-tag--reported">${esc(r.err)}</span>`}</td></tr>`).join('')}</tbody></table></div>
+        </div>` : ''}` : `<div class="panel panel--grow">
+          <div class="toolbar" style="margin-bottom:.05208rem"><span class="sec-title" style="margin:0">逐行填写物品</span>
+            <div class="toolbar__ops"><button class="btn btn--plain" data-act="addRow">添加一行</button><button class="btn btn--primary" data-act="submitRows">确认登记</button></div></div>
+          <div class="table-wrap"><table class="table table--admin"><thead><tr><th>序号</th><th>物品种类</th><th>物品名称</th><th>校区</th><th>捡到地点</th><th>外观说明</th><th class="col-fixed">操作</th></tr></thead>
+          <tbody>${st.rows.map((r, i) => `<tr>
+            <td>${i + 1}</td>
+            <td><select class="select" data-r="${i}" data-k="fl">${opts(S.LF_FL.filter(x => x.value !== 'campuscard').map(x => [x.value, x.label]), r.fl)}</select></td>
+            <td><input class="input" data-r="${i}" data-k="mc" maxlength="30" placeholder="如：黑色折叠伞" value="${esc(r.mc)}"></td>
+            <td><select class="select" data-r="${i}" data-k="xq">${opts([['', '默认校区']].concat(S.LF_XQ.map(x => [x, x])), r.xq)}</select></td>
+            <td><input class="input" data-r="${i}" data-k="dd" maxlength="40" placeholder="${esc(d.dd || '请输入')}" value="${esc(r.dd)}"></td>
+            <td><input class="input" data-r="${i}" data-k="nr" maxlength="100" placeholder="关键特征留给认领人核对" value="${esc(r.nr)}"></td>
+            <td class="col-fixed"><div class="ops"><button class="btn-link btn-link--danger" data-del-row="${i}">删除</button></div></td></tr>`).join('')}</tbody></table></div>
+          <p class="c-light" style="font-size:.0625rem;margin:.05208rem 0 0">物品名称为空的行会被忽略；登记后会自动更新当天的招领汇总（待确认）</p>
+        </div>`}`;
+    },
+    bind(root, st) {
+      const syncDef = () => root.querySelectorAll('[data-d]').forEach(i => { st.def[i.dataset.d] = i.value; });
+      UI.delegate(root, 'change', '[data-mode]', (e, el) => { syncDef(); st.mode = el.value; PC.refresh(); });
+      UI.delegate(root, 'change', '[data-d]', (e, el) => {
+        st.def[el.dataset.d] = el.value;
+        if (el.dataset.d === 'bgdid') { const p = S.lfPoint(el.value); if (p && p.xq) st.def.xq = p.xq; PC.refresh(); }
+      });
+      UI.delegate(root, 'input', '[data-d="dd"]', (e, el) => { st.def.dd = el.value; });
+      UI.delegate(root, 'input', '[data-keep="cards"]', (e, el) => { st.text = el.value; });
+      UI.delegate(root, 'input', '[data-r]', (e, el) => { st.rows[+el.dataset.r][el.dataset.k] = el.value; });
+      UI.delegate(root, 'change', 'select[data-r]', (e, el) => { st.rows[+el.dataset.r][el.dataset.k] = el.value; });
+      UI.delegate(root, 'click', '[data-del-row]', (e, el) => { st.rows.splice(+el.dataset.delRow, 1); if (!st.rows.length) st.rows.push(newRow(st.def)); PC.refresh(); });
+      const done = n => {
+        UI.open({
+          kind: 'dialog', title: '登记完成', width: '4.8rem',
+          render: () => `<div class="info-grid"><div class="info-grid__cell"><b>本次登记：</b>${n} 件</div><div class="info-grid__cell"><b>保管：</b>${esc((S.lfPoint(st.def.bgdid) || {}).mc || '')}</div>
+            <div class="info-grid__cell info-grid__cell--full"><b>今日汇总：</b>已自动更新，确认后发布到前台招领站</div></div>
+            <div class="dlg-foot"><button class="btn" data-close>继续登记</button><button class="btn btn--plain" data-items>查看台账</button><button class="btn btn--primary" data-digest>去确认汇总</button></div>`,
+          on: {
+            'click [data-items]': (e, el, l) => { l.close(); PC.go(LOST + '/items'); },
+            'click [data-digest]': (e, el, l) => { l.close(); PC.go(LOST + '/digest'); }
+          }
+        });
+      };
+      const base = () => { syncDef(); const d = st.def; return { bgdid: d.bgdid, xq: d.xq, dd: d.dd || '服务点登记', sj: d.rq ? new Date(d.rq + 'T12:00').getTime() : undefined }; };
+      UI.delegate(root, 'click', '[data-act]', UI.guard((e, el) => {
+        const a = el.dataset.act;
+        if (a === 'sample') { st.text = '王一鸣 8225130218 冶金与环境学院 本部\n陈思远 8209220311 商学院 新校\n刘可欣 8301210127 湘雅医学院 湘雅\n8226010203 交通运输工程学院'; st.parsed = null; root.querySelector('[data-keep="cards"]').value = st.text; PC.refresh(); }
+        else if (a === 'parse') {
+          st.text = root.querySelector('[data-keep="cards"]').value; syncDef();
+          if (!st.text.trim()) { toast('请先粘贴校园卡信息', 'warning'); return; }
+          st.parsed = S.lfParseCards(st.text, { xq: st.def.xq }); PC.refresh();
+        } else if (a === 'submitCards') {
+          const n = S.lfBatchCreate(st.parsed, base());
+          st.text = ''; st.parsed = null; root.querySelector('[data-keep="cards"]').value = ''; PC.refresh(); done(n);
+        } else if (a === 'addRow') { st.rows.push(newRow(st.def)); PC.refresh(); }
+        else if (a === 'submitRows') {
+          const rows = st.rows.filter(r => r.mc.trim());
+          if (!rows.length) { toast('请至少填写一行物品名称', 'warning'); return; }
+          const n = S.lfBatchCreate(rows.map(r => Object.assign({}, r, { xq: r.xq || st.def.xq })), base());
+          st.rows = [newRow(st.def), newRow(st.def), newRow(st.def)]; PC.refresh(); done(n);
+        }
+      }));
+    }
+  };
+
+  /* 每日汇总 */
+  const digestText = d => `【资助团队招领站】${LF.digestTitle(d)}\n今日共登记 ${d.total} 件：${LF.digestLine(d)}\n`
+    + d.items.map((it, i) => `${i + 1}. ${it.mc}（${it.xq} · ${it.dd}）保管：${it.bgText}`).join('\n')
+    + '\n失主可在「中南点点 · 失物招领」提交认领申请，核对通过后按约定时间领取。';
+  function openDigest(id) {
+    UI.open({
+      kind: 'dialog', title: '汇总详情', width: '6.4rem',
+      render: () => {
+        const d = S.lfDigestGet(id);
+        return `<div class="info-grid"><div class="info-grid__cell"><b>汇总日期：</b>${S.fmtDate(d.rq)}</div><div class="info-grid__cell"><b>状态：</b><span class="status-tag ${d.zt === 'published' ? 'status-tag--normal' : 'status-tag--topped'}">${d.ztLabel}</span></div>
+            <div class="info-grid__cell"><b>物品数量：</b>${d.total} 件</div><div class="info-grid__cell"><b>校区分布：</b>${esc(LF.digestLine(d))}</div>
+            <div class="info-grid__cell"><b>生成人：</b>${esc((S.user(d.scr) || {}).nc || '系统')} · ${S.fmtDateTime(d.cjsj)}</div><div class="info-grid__cell"><b>确认发布：</b>${d.qrrUser ? esc(d.qrrUser.nc) + ' · ' + S.fmtDateTime(d.qrsj) : '—'}</div></div>
+          <div class="sec-title">物品清单</div>
+          <div class="table-wrap" style="max-height:1.6rem"><table class="table table--admin"><thead><tr><th>信息编号</th><th>物品</th><th>种类</th><th>校区</th><th>捡到地点</th><th>保管</th><th>状态</th></tr></thead>
+            <tbody>${d.items.length ? d.items.map(it => `<tr><td>${esc(it.bh)}</td><td>${esc(it.mc)}</td><td>${esc(it.flLabel)}</td><td>${esc(it.xq)}</td><td>${esc(it.dd)}</td><td>${esc(it.bgText)}</td><td>${lfTag(it)}</td></tr>`).join('') : '<tr class="table__empty"><td colspan="7">当天没有团队登记的物品</td></tr>'}</tbody></table></div>
+          <div class="sec-title">发布文案</div><div class="risk-content">${esc(digestText(d))}</div>
+          <div class="dlg-foot"><button class="btn" data-close>关闭</button><button class="btn btn--plain" data-copy>复制文案</button>
+            ${d.zt === 'draft' ? '<button class="btn btn--plain" data-regen>重新生成</button><button class="btn btn--primary" data-pub>确认发布</button>' : ''}</div>`;
+      },
+      on: {
+        'click [data-copy]': () => { UI.copy(digestText(S.lfDigestGet(id))); toast('已复制', 'success'); },
+        'click [data-regen]': () => { S.lfDigestGenerate(S.lfDigestGet(id).rq); toast('已按当天登记重新生成', 'success'); },
+        'click [data-pub]': (e, el, l) => { S.lfDigestPublish(id); toast('已发布到前台招领站', 'success'); l.close(); }
+      }
+    });
+  }
+  PC.pages[LOST + '/digest'] = {
+    admin: true, lost: true, title: '每日汇总',
+    init: () => ({ f: { zt: '', start: '', end: '' }, rq: S.fmtDate(Date.now()), page: 1, pageSize: 15 }),
+    render(st) {
+      const f = st.f;
+      const all = S.lfDigests({ published: false }).filter(d => (!f.zt || d.zt === f.zt) && (!f.start || d.rq >= dayStart(f.start)) && (!f.end || d.rq <= dayEnd(f.end)));
+      const list = page(all, st);
+      const today = S.lfDigests({ published: false }).find(d => d.isToday);
+      const todayN = S.lfDayItems(S.startOfDay(Date.now())).length;
+      const canGen = S.lfCan('register');
+      return `${!today ? `<div class="warn-bar">⚠ 今日汇总尚未生成：今天团队已登记 ${todayN} 件物品${canGen ? '，可在下方生成后确认发布' : ''}</div>`
+          : today.zt === 'draft' ? `<div class="warn-bar">⚠ 今日汇总待确认：共 ${today.total} 件，确认后才会在前台招领站展示 ${canGen ? `<button class="btn-link" data-view="${today.id}">去确认</button>` : ''}</div>` : ''}
+        <div class="panel"><div class="filter">
+          ${fItem('汇总状态', `<select class="select" data-f="zt">${opts([['', '全部'], ['draft', '待确认'], ['published', '已发布']], f.zt)}</select>`)}
+          ${fItem('汇总日期', `<input class="input" type="date" data-f="start" value="${f.start}"><span class="filter__sep">-</span><input class="input" type="date" data-f="end" value="${f.end}">`, 'filter__item--wide')}
+          <div class="filter__ops"><button class="btn btn--primary" data-act="query">${IC.search}立即查询</button><button class="btn btn--plain" data-act="reset">重置</button></div>
+        </div></div>
+        ${canGen ? `<div class="panel"><div class="toolbar"><div class="f-c" style="gap:.05208rem">${fItem('生成日期', `<input class="input" type="date" data-rq max="${S.fmtDate(Date.now())}" value="${st.rq}">`)}<span class="c-light" style="font-size:.0625rem">按所选日期团队登记的物品生成汇总，生成后需人工确认再发布</span></div>
+          <div class="toolbar__ops"><button class="btn btn--primary" data-act="gen">生成汇总</button></div></div></div>` : ''}
+        <div class="panel panel--grow"><div class="table-wrap"><table class="table table--admin">
+          <thead><tr><th>序号</th><th>汇总日期</th><th>物品数量</th><th>校区分布</th><th>种类分布</th><th>状态</th><th>生成人</th><th>确认发布</th><th class="col-fixed">操作</th></tr></thead>
+          <tbody>${list.length ? list.map((d, i) => `<tr><td>${(st.page - 1) * st.pageSize + i + 1}</td><td>${S.fmtDate(d.rq)}${d.isToday ? ' <span class="status-tag status-tag--blue">今日</span>' : ''}</td><td>${d.total}</td>
+            <td>${esc(LF.digestLine(d))}</td><td>${esc(d.fls.map(x => `${x.label} ${x.n}`).join(' · ') || '—')}</td>
+            <td><span class="status-tag ${d.zt === 'published' ? 'status-tag--normal' : 'status-tag--topped'}">${d.ztLabel}</span></td>
+            <td>${esc((S.user(d.scr) || {}).nc || '系统')}</td><td style="white-space:nowrap">${d.qrrUser ? esc(d.qrrUser.nc) + ' · ' + S.fmtDateTime(d.qrsj) : '—'}</td>
+            <td class="col-fixed"><div class="ops"><button class="btn-link" data-view="${d.id}">查看</button>${d.zt === 'draft' && canGen ? `<button class="btn-link btn-link--success" data-pub="${d.id}">确认发布</button>` : ''}</div></td></tr>`).join('') : '<tr class="table__empty"><td colspan="9">暂无汇总</td></tr>'}</tbody></table></div>
+          ${PC.pager(all.length, st.page, st.pageSize)}</div>`;
+    },
+    bind(root, st) {
+      UI.delegate(root, 'click', '[data-act]', UI.guard((e, el) => {
+        const a = el.dataset.act;
+        if (a === 'gen') {
+          st.rq = root.querySelector('[data-rq]').value;
+          if (!st.rq) { toast('请选择日期', 'warning'); return; }
+          const d = S.lfDigestGenerate(S.startOfDay(new Date(st.rq + 'T12:00').getTime()));
+          toast(`已生成 ${S.fmtDate(d.rq)} 汇总，共 ${d.itemIds.length} 件`, 'success'); openDigest(d.id);
+          return;
+        }
+        st.f = a === 'query' ? readFilter(root) : { zt: '', start: '', end: '' }; st.page = 1; PC.refresh();
+      }));
+      UI.delegate(root, 'click', '[data-view]', (e, el) => openDigest(el.dataset.view));
+      UI.delegate(root, 'click', '[data-pub]', UI.guard(async (e, el) => {
+        if (await UI.confirm('确认发布该日汇总？发布后会在前台「资助团队招领站」展示。', { title: '确认发布' })) { S.lfDigestPublish(el.dataset.pub); toast('已发布', 'success'); }
+      }));
+      PC.bindPager(root, st, PC.refresh);
+    }
+  };
+
+  /* 服务点与成员。角色配置只改本页示意，不写回成员权限、台账范围和发布能力 */
+  const ROLE_GUIDE = [
+    { id: 'register', label: '登记成员', work: '登记与编辑负责服务点的物品', scope: '负责服务点的物品信息' },
+    { id: 'checker', label: '核对成员', work: '处理授权的认领申请与交接归还', scope: '所处理申请的核验材料' },
+    { id: 'admin', label: '管理员', work: '配置服务点、成员、异常处理', scope: '按业务职责查看相关记录' }
+  ];
+  function buildMemberDemo() {
+    const rows = S.lfMembers().map(m => ({
+      uid: m.uid, xm: m.u.xm || '—', xh: m.u.xh || '—', nc: m.u.nc || '—',
+      roles: m.roles.filter(r => ROLE_GUIDE.some(g => g.id === r)), points: m.points.slice(), cjsj: m.cjsj
+    }));
+    const extra = S.user('u103');
+    if (extra && !rows.some(r => r.uid === extra.id)) {
+      rows.push({ uid: extra.id, xm: extra.xm || '—', xh: extra.xh || '—', nc: extra.nc || '—', roles: ['admin'], points: [], cjsj: extra.cjsj });
+    }
+    return rows;
+  }
+  const roleTags = roles => ROLE_GUIDE.filter(g => roles.includes(g.id)).map(g => `<span class="status-tag status-tag--blue">${g.label}</span>`).join(' ') || '—';
+  const scopeText = roles => ROLE_GUIDE.filter(g => roles.includes(g.id)).map(g => g.scope).join('；') || '—';
+  const pointText = row => row.roles.includes('admin') ? '全部服务点' : row.points.map(id => (S.lfPoint(id) || {}).mc).filter(Boolean).join('、') || '—';
+  function openRoleGuide() {
+    UI.open({
+      kind: 'dialog', title: '角色说明', width: '6.4rem',
+      render: () => `<div class="table-wrap"><table class="table table--admin"><thead><tr><th>角色</th><th>主要工作</th><th>查看范围</th></tr></thead>
+        <tbody>${ROLE_GUIDE.map(g => `<tr><td>${g.label}</td><td>${g.work}</td><td>${g.scope}</td></tr>`).join('')}</tbody></table></div>
+        <div class="dlg-foot"><button class="btn btn--primary" data-close>知道了</button></div>`
+    });
+  }
+  function openMemberRole(uid) {
+    const row = ((PC.page && PC.page.state && PC.page.state.members) || []).find(m => m.uid === uid);
+    if (!row) return;
+    UI.open({
+      kind: 'dialog', title: '配置角色', width: '6.4rem',
+      state: { roles: row.roles.slice(), points: row.points.slice() },
+      render: l => {
+        const superAdmin = S.lfIsSuper();
+        const roles = ROLE_GUIDE.map(g => {
+          const locked = g.id === 'admin' && !superAdmin;
+          return `<label class="check" style="display:flex;align-items:flex-start;gap:.04167rem;${locked ? 'cursor:not-allowed' : ''}">
+            <input type="checkbox" data-role="${g.id}" ${l.state.roles.includes(g.id) ? 'checked' : ''} ${locked ? 'disabled' : ''} style="margin-top:.02rem">
+            <span><span${locked ? ' style="color:#909399"' : ''}>${g.label}</span>
+              <div class="form-item__hint">主要工作：${esc(g.work)}<br>查看范围：${esc(g.scope)}</div>
+              ${locked ? '<div class="form-item__hint">仅总管理员可设置</div>' : ''}</span></label>`;
+        }).join('');
+        const pts = S.lfPoints().map(p => `<label class="check"><input type="checkbox" data-point="${p.id}" ${l.state.points.includes(p.id) ? 'checked' : ''}>${esc(p.mc)}</label>`).join('');
+        return `<div class="form">
+          <div class="form-item"><label class="form-item__label">姓名</label><div class="form-item__ctrl" style="line-height:.16667rem">${esc(row.xm)}</div></div>
+          <div class="form-item"><label class="form-item__label">学号/工号</label><div class="form-item__ctrl" style="line-height:.16667rem">${esc(row.xh)}</div></div>
+          <div class="form-item"><label class="form-item__label req">角色</label><div class="form-item__ctrl" style="display:flex;flex-direction:column;gap:.0625rem">${roles}</div></div>
+          <div class="form-item"><label class="form-item__label">负责服务点</label><div class="form-item__ctrl"><div class="check-group">${pts}</div>
+            ${l.state.roles.includes('admin') ? '<div class="form-item__hint">管理员不限服务点</div>' : ''}</div></div>
+        </div><div class="dlg-foot"><button class="btn" data-close>取消</button><button class="btn btn--primary" data-ok>确定</button></div>`;
+      },
+      on: {
+        'change [data-role]': (e, el, l) => {
+          if (el.dataset.role === 'admin' && !S.lfIsSuper()) return;
+          const set = new Set(l.state.roles);
+          if (el.checked) set.add(el.dataset.role); else set.delete(el.dataset.role);
+          l.state.roles = ROLE_GUIDE.map(g => g.id).filter(id => set.has(id));
+          l.refresh();
+        },
+        'change [data-point]': (e, el, l) => {
+          const set = new Set(l.state.points);
+          if (el.checked) set.add(el.dataset.point); else set.delete(el.dataset.point);
+          l.state.points = S.lfPoints().map(p => p.id).filter(id => set.has(id));
+        },
+        'click [data-ok]': (e, el, l) => {
+          if (!l.state.roles.length) { toast('请至少选择一个角色', 'warning'); return; }
+          if (!l.state.roles.includes('admin') && !l.state.points.length) { toast('请选择负责的服务点', 'warning'); return; }
+          let roles = l.state.roles.slice();
+          if (!S.lfIsSuper()) {
+            roles = roles.filter(r => r !== 'admin');
+            if (row.roles.includes('admin')) roles.push('admin');
+          }
+          row.roles = ROLE_GUIDE.map(g => g.id).filter(id => roles.includes(id));
+          row.points = l.state.points.slice();
+          toast('已保存', 'success');
+          l.close();
+          PC.refresh();
+        }
+      }
+    });
+  }
+  function openPoint(id) {
+    const p = id ? S.lfPoint(id) : { mc: '', xq: '', dz: '', zbap: '', lxfs: '站内私信', lstz: '', fzr: '', px: S.lfPoints().length + 1 };
+    const members = S.lfMembers();
+    UI.open({
+      kind: 'dialog', title: id ? '编辑服务点' : '新增服务点', width: '4.8rem',
+      render: () => `<div class="form">
+        <div class="form-item"><label class="form-item__label req">服务点名称</label><div class="form-item__ctrl"><input class="input" data-k="mc" data-keep="mc" maxlength="20" placeholder="如：校本部服务点" value="${esc(p.mc)}"></div></div>
+        <div class="form-item"><label class="form-item__label">所在校区</label><div class="form-item__ctrl"><select class="select" data-k="xq">${opts([['', '请选择']].concat(S.LF_XQ.map(x => [x, x])), p.xq)}</select></div></div>
+        <div class="form-item"><label class="form-item__label">地址</label><div class="form-item__ctrl"><input class="input" data-k="dz" data-keep="dz" maxlength="40" placeholder="未确认可先留空，前台显示「由团队确认并维护」" value="${esc(p.dz)}"></div></div>
+        <div class="form-item"><label class="form-item__label req">值班安排</label><div class="form-item__ctrl"><input class="input" data-k="zbap" data-keep="zbap" maxlength="40" placeholder="如：周一至周五 12:00-14:00" value="${esc(p.zbap)}"></div></div>
+        <div class="form-item"><label class="form-item__label">联系方式</label><div class="form-item__ctrl"><input class="input" data-k="lxfs" data-keep="lxfs" maxlength="40" value="${esc(p.lxfs)}"></div></div>
+        <div class="form-item"><label class="form-item__label">临时调整</label><div class="form-item__ctrl"><input class="input" data-k="lstz" data-keep="lstz" maxlength="40" placeholder="如：本周五下午值班暂停（留空则不展示）" value="${esc(p.lstz)}"><div class="form-item__hint">会以橙色提示展示在前台服务点信息和物品详情中</div></div></div>
+        <div class="form-item"><label class="form-item__label">负责成员</label><div class="form-item__ctrl"><select class="select" data-k="fzr">${opts([['', '不指定']].concat(members.map(m => [m.uid, esc(m.u.xm || m.u.nc)])), p.fzr)}</select><div class="form-item__hint">认领人点击「联系团队」时私信该成员</div></div></div>
+        <div class="form-item"><label class="form-item__label">排序号</label><div class="form-item__ctrl f-c" style="gap:.04167rem"><input class="input" type="number" data-k="px" data-keep="px" value="${p.px}" style="width:1rem"><span class="c-light">越小越靠前</span></div></div>
+      </div><div class="dlg-foot"><button class="btn" data-close>取消</button><button class="btn btn--primary" data-ok>确定</button></div>`,
+      on: {
+        'click [data-ok]': (e, el, l) => {
+          const v = {}; l.body.querySelectorAll('[data-k]').forEach(i => { v[i.dataset.k] = i.value.trim(); });
+          if (id) v.id = id;
+          S.lfSavePoint(v); toast(id ? '保存成功' : '新增成功', 'success'); l.close();
+        }
+      }
+    });
+  }
+  PC.pages[LOST + '/points'] = {
+    admin: true, lost: true, title: '服务点与成员',
+    init: () => ({ members: buildMemberDemo() }),
+    render(st) {
+      const can = S.lfCan('admin');
+      const pts = S.lfPoints(), members = st.members || (st.members = buildMemberDemo());
+      return `${can ? '' : '<div class="warn-bar">⚠ 当前账号仅可查看服务点与成员名单。</div>'}
+        <div class="panel">
+          <div class="toolbar" style="margin-bottom:.05208rem"><span class="sec-title" style="margin:0">服务点（${pts.length}）</span><div class="toolbar__ops">${can ? '<button class="btn btn--primary" data-act="addPoint">新增服务点</button>' : ''}</div></div>
+          <div class="table-wrap"><table class="table table--admin"><thead><tr><th>排序</th><th>服务点名称</th><th>校区</th><th>地址</th><th>值班安排</th><th>联系方式</th><th>临时调整</th><th>负责成员</th><th>在保物品</th>${can ? '<th class="col-fixed">操作</th>' : ''}</tr></thead>
+          <tbody>${pts.length ? pts.map(p => `<tr><td>${p.px}</td><td>${esc(p.mc)}</td><td>${esc(p.xq || '—')}</td><td>${p.dz ? esc(p.dz) : '<span class="status-tag status-tag--gray">待确认</span>'}</td><td>${esc(p.zbap)}</td><td>${esc(p.lxfs || '—')}</td>
+            <td>${p.lstz ? `<span class="c-warn">${esc(p.lstz)}</span>` : '—'}</td><td>${p.fzrUser ? esc(p.fzrUser.xm || p.fzrUser.nc) : '—'}</td><td>${p.items}</td>
+            ${can ? `<td class="col-fixed"><div class="ops"><button class="btn-link" data-edit-point="${p.id}">编辑</button><button class="btn-link btn-link--danger" data-del-point="${p.id}">删除</button></div></td>` : ''}</tr>`).join('') : `<tr class="table__empty"><td colspan="${can ? 10 : 9}">暂无服务点</td></tr>`}</tbody></table></div>
+        </div>
+        <div class="panel panel--grow">
+          <div class="toolbar" style="margin-bottom:.05208rem"><span class="sec-title" style="margin:0">资助团队成员（${members.length}）</span><div class="toolbar__ops"><button class="btn btn--plain" data-act="roleGuide">角色说明</button></div></div>
+          <div class="table-wrap"><table class="table table--admin"><thead><tr><th>序号</th><th>姓名</th><th>学号/工号</th><th>前台昵称</th><th>标识</th><th>角色</th><th>负责服务点</th><th>可见范围</th><th>加入时间</th><th class="col-fixed">操作</th></tr></thead>
+          <tbody>${members.length ? members.map((m, i) => `<tr><td>${i + 1}</td><td>${esc(m.xm)}</td><td>${esc(m.xh)}</td><td>${esc(m.nc)}</td>
+            <td><span class="status-tag status-tag--blue">资助团队</span></td>
+            <td style="white-space:nowrap">${roleTags(m.roles)}</td><td>${esc(pointText(m))}</td>
+            <td class="c-light">${esc(scopeText(m.roles))}</td><td style="white-space:nowrap">${S.fmtDateTime(m.cjsj)}</td>
+            <td class="col-fixed"><div class="ops"><button class="btn-link" data-cfg="${esc(m.uid)}">配置</button></div></td>
+            </tr>`).join('') : '<tr class="table__empty"><td colspan="10">暂无资助团队成员</td></tr>'}</tbody></table></div>
+          <p class="c-light" style="font-size:.0625rem;margin:.05208rem 0 0">本页只展示服务点和成员名单。认定资助团队在「用户管理」里做页面示意，不会改动这里的名单，也不会改已发布物品上的标签。成员「配置」只更新本页的角色和可见范围示意。</p>
+        </div>`;
+    },
+    bind(root) {
+      UI.delegate(root, 'click', '[data-act]', (e, el) => {
+        if (el.dataset.act === 'addPoint') openPoint();
+        else if (el.dataset.act === 'roleGuide') openRoleGuide();
+      });
+      UI.delegate(root, 'click', '[data-edit-point]', (e, el) => openPoint(el.dataset.editPoint));
+      UI.delegate(root, 'click', '[data-del-point]', UI.guard(async (e, el) => {
+        const p = S.lfPoint(el.dataset.delPoint);
+        if (await UI.confirm(`确认删除服务点「${p.mc}」？`, { danger: true })) { S.lfDeletePoint(p.id); toast('已删除', 'success'); }
+      }));
+      UI.delegate(root, 'click', '[data-cfg]', (e, el) => openMemberRole(el.dataset.cfg));
     }
   };
 })();
