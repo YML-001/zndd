@@ -315,10 +315,12 @@
       const hot = st.hot.map(id => Store.getPost(id)).filter(p => p && p.ztbq !== 'deleted');
       const score = p => Math.max(0, Math.round(p.rds - (p.ztbq === 'topped' ? 100 : 0)));
       const no = i => String(i + 1).padStart(2, '0');
-      const hotItem = (p, i) => `<button class="top5__item top5__item--${i + 1}" data-act="post" data-id="${p.id}">
+      const hotItem = (p, i) => {
+        const cat = (Store.LX_MAP[p.lx] || {}).label || '话题';
+        return `<button class="top5__item top5__item--${i + 1}" data-act="post" data-id="${p.id}">
           <span class="top5__no">${no(i)}</span>
-          ${i === 0 ? `<span style="min-width:0;flex:1"><div class="top5__bt ellipsis">${esc(p.bt)}</div><div class="top5__hot">热搜指数：${score(p)}</div></span><span class="top5__arrow">›</span>`
-          : `<span class="top5__bt ${i < 3 ? 'clamp2' : 'ellipsis'}" style="min-width:0">${esc(p.bt)}</span>`}</button>`;
+          <span class="top5__main"><div class="top5__bt">${esc(p.bt)}</div><div class="top5__hot">${esc(cat)} · 热搜指数 ${score(p)}</div></span></button>`;
+      };
       return `<div class="pg pg--tab">
         <div class="home-search-card" style="margin-top:16px">
           <img class="home-search-card__logo" src="${A}hero-logo.svg" alt="发声，让校园更美好">
@@ -849,7 +851,7 @@
       const list = Store.sessions();
       return `<div class="pg">${navbar('私信')}<div class="sx-list">${list.length ? list.map(s => `<button class="sx-item" data-act="go" data-path="${B}/profile/sx/chat" data-q="peer=${s.peerUserId}">
           ${avatar(s, 'lg')}${s.unreadCount ? `<span class="red-dot">${s.unreadCount}</span>` : ''}
-          <div class="sx-item__main"><div class="sx-item__t"><span class="ellipsis">${esc(s.peerNc)}</span><time>${Store.fmtDate(s.cjsj, true)}</time></div>
+          <div class="sx-item__main"><div class="sx-item__t"><span class="ellipsis">${esc(s.peerNc)}</span><time>${Store.pmListTime(s.cjsj)}</time></div>
           <div class="sx-item__d ellipsis">${esc(s.nr)}</div></div></button>`).join('') + '<div class="more-tip"> 暂无更多私信～ </div>'
         : '<div class="empty-tip">暂无私信会话</div>'}</div></div>`;
     }
@@ -926,12 +928,12 @@
     const imgs = (it.tps || []).slice(0, 3);
     return `<div class="post-card" data-act="lfItem" data-id="${it.id}">
       <div class="post-card__head">${avatar(it)}
-        <div class="post-card__who"><div class="post-card__nc ellipsis">${esc(it.fbrnc)}</div><div class="post-card__time">${Store.relTime(it.fbsj)} · ${it.lyLabel}</div>${it.isTeam ? `<div style="margin-top:4px">${LF.teamBadge(it, 'h5')}</div>` : ''}</div>
+        <div class="post-card__who"><div class="post-card__nc ellipsis">${esc(it.fbrnc)} ${LF.sourceMark(it, 'h5')}</div><div class="post-card__time">${Store.relTime(it.fbsj)} · ${it.lyLabel}</div>${it.isTeam ? `<div style="margin-top:4px">${LF.teamBadge(it, 'h5')}</div>` : ''}</div>
         <div class="post-card__tags"><span class="lx-pill lx-pill--${LF.h5FlTone(it.fl)}">${esc(it.flLabel)}</span></div></div>
       <div class="post-card__bt">${esc(it.mc)}</div>
       <div class="post-card__nr">${it.lx === 'lost' ? '可能丢失于' : '捡到于'} ${esc(it.xq)} · ${esc(it.dd)}<br>${esc(it.sjText)}</div>
       ${imgs.length ? `<div class="post-card__imgs">${imgs.map(t => `<img src="${esc(imgSrc(t))}" alt="">`).join('')}</div>` : ''}
-      <div class="post-card__foot">${lfFlag(it, 'post-card__flag')}${it.lx === 'found' ? `<span>${esc(it.bgText)}</span>` : ''}${it.claimN && it.canReview ? `<span>${it.claimN} 条申请</span>` : ''}${it.lx === 'lost' && it.clueN ? `<span>${it.clueN} 条线索</span>` : ''}</div>
+      <div class="post-card__foot">${lfFlag(it, 'post-card__flag')}${it.lx === 'found' ? `<span>${esc(it.bgText)}</span>` : ''}${it.claimN && it.canReview ? `<span>${it.claimN} 条申请</span>` : ''}${it.lx === 'lost' && it.isMine && it.clueN ? `<span>${it.clueN} 条线索</span>` : ''}</div>
       ${ops ? `<div class="post-card__ops">${ops}</div>` : ''}</div>`;
   }
   function openOptSheet({ title, options, value, onPick }) {
@@ -1120,7 +1122,7 @@
       const found = it.lx === 'found';
       const p = it.point;
       const claims = it.canReview ? Store.lfClaimsOf(it.id) : [];
-      const clues = found ? [] : Store.lfClues(it.id);
+      const clues = !found && it.isMine ? Store.lfClues(it.id) : [];
       const my = it.myClaim ? Store.lfClaimGet(it.myClaim.id) : null;
       const banner = ['returned', 'found'].includes(it.ztKey) ? 'rd__banner--done' : '';
       const team = !it.isMine && (it.canEdit || it.canReturn);
@@ -1142,10 +1144,12 @@
           ${kv('领取须知', '核对通过后按约定时间领取，请携带校园卡或有效证件')}</div>` : ''}
         <div class="rd__sec"><h5>发布信息</h5>
           <div class="pd__head" ${it.isTeam ? '' : `data-act="pm" data-uid="${it.fbrid}"`}>${avatar(it, 'sm')}<div class="pd__who"><div style="font-weight:700">${esc(it.fbrnc)} ${LF.teamBadge(it, 'h5')}</div><div class="pd__time">${it.lyLabel} · ${Store.fmtDate(it.fbsj, true)}</div></div></div></div>
-        ${my ? `<div class="rd__sec"><h5>我的认领进度 ${lfFlag(my)}</h5>${stepsHtml(LF.claimSteps(my))}
-          ${my.zt === 'more' ? `<div class="post-card__ops"><button data-act="go" data-path="${LOST}/claim" data-q="claim=${my.id}">补充材料</button></div>` : ''}</div>` : ''}
+        ${my && ['pending', 'more'].includes(my.zt) ? `<div class="rd__sec"><h5>我的认领进度 ${lfFlag(my)}</h5>${stepsHtml(LF.claimSteps(my))}
+          <div class="post-card__ops"><button data-act="editClaim">修改</button><button class="danger" data-act="cancelClaim">撤回</button></div></div>` : my ? `<div class="rd__sec"><h5>我的认领进度 ${lfFlag(my)}</h5>${stepsHtml(LF.claimSteps(my))}</div>` : ''}
         ${it.canReview && claims.length ? `<div class="rd__sec"><h5>认领申请（${claims.length}）</h5>${claims.map(claimBox).join('')}</div>` : ''}
-        ${found ? '' : `<div class="rd__sec"><h5>${it.isMine ? '收到的线索' : '同学提供的线索'}（${clues.length}）</h5>${clues.length ? clues.map(c => clueBox(c, it.isMine)).join('') : `<div class="rd__post-nr">${it.isMine ? '暂无线索，有同学提供时会通过消息通知你' : '还没有同学提供线索'}</div>`}</div>`}
+        ${found ? '' : it.isMine
+          ? `<div class="rd__sec"><h5>收到的线索（${clues.length}）</h5>${clues.length ? clues.map(c => clueBox(c, true)).join('') : '<div class="rd__post-nr">暂无线索，有同学提供时会通过消息通知你</div>'}</div>`
+          : `<div class="rd__sec"><h5>同学提供的线索</h5><div class="rd__post-nr">线索内容仅寻物发布者可见。见过这件物品，可以在页面底部提供线索。</div></div>`}
         ${it.isMine || team ? `<div class="rd__sec"><h5>处理记录</h5>${stepsHtml(it.logs.slice().reverse().map(l => ({ title: l.act, state: 'done', time: Store.fmtDate(l.t, true), desc: [l.note, (Store.user(l.uid) || {}).nc].filter(Boolean).join(' · ') })))}</div>` : ''}
         <div class="rd__tip">请勿公开完整学号、身份证号等信息；虚假认领将按社区规范处理</div></div>
         ${btns.length ? `<div class="pub__foot">${btns.map(([act, label], i) => `<button class="${i === btns.length - 1 ? 'btn-primary' : 'btn-ghost'}" data-act="${act}">${label}</button>`).join('')}</div>` : ''}</div>`;
@@ -1159,6 +1163,12 @@
       },
       claim(el, st) { if (!can()) return; H5.go(LOST + '/claim', { id: st.id }); },
       myClaim(el, st) { H5.go(LOST + '/claimDetail', { id: Store.lfGet(st.id).myClaim.id }); },
+      editClaim(el, st) { const my = Store.lfGet(st.id).myClaim; if (my) H5.go(LOST + '/claim', { claim: my.id }); },
+      async cancelClaim(el, st) {
+        const my = Store.lfGet(st.id).myClaim;
+        if (!my) return;
+        if (await UI.confirm('撤回后可以修改内容再重新提交。', { title: '撤回认领申请', ok: '确认撤回' })) { Store.lfCancelClaim(my.id); toast('已撤回'); }
+      },
       clue(el, st) { if (!can()) return; openClueSheet(st.id); },
       edit(el, st) { H5.go(LOST + '/publish', { id: st.id }); },
       withdraw(el, st) {
@@ -1299,7 +1309,8 @@
     render(st) {
       const it = Store.lfGet(st.id);
       const c = st.cid && Store.lfClaimGet(st.cid);
-      const title = st.cid ? '补充认领材料' : '申请认领';
+      const editing = c && ['pending', 'more'].includes(c.zt);
+      const title = editing ? '修改认领申请' : c ? '认领申请' : '申请认领';
       if (!it) return `<div class="pg">${navbar(title)}<div class="empty-tip">物品信息不存在</div></div>`;
       return `<div class="pg pub">${navbar(title)}
         <div class="warn-bar"><span class="warn-bar__ico">!</span><span> 请描述未公开的特征（如贴纸、刻字、划痕、内含物品），核对人会据此判断归属；虚假认领将按社区规范处理。 </span></div>
@@ -1315,7 +1326,7 @@
           <div class="pub__imgs">${st.tps.map((t, i) => `<div class="pub__thumb"><img src="${esc(imgSrc(t))}" data-act="preview" alt=""><button data-act="rmImg" data-i="${i}">×</button></div>`).join('')}
             ${st.tps.length < 3 ? `<button class="pub__upload" data-act="upload"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 20V5M6 11l6-6 6 6"/></svg>点击上传</button>` : ''}</div>
         </div>
-        <div class="pub__foot"><button class="btn-ghost" data-act="back">返回</button><button class="btn-primary" data-act="submit">${st.cid ? '提交补充' : '提交申请'}</button></div></div>`;
+        <div class="pub__foot"><button class="btn-ghost" data-act="back">返回</button><button class="btn-primary" data-act="submit">${editing ? '保存修改' : '提交申请'}</button></div></div>`;
     },
     inputs: { v(el, st) { st[el.dataset.k] = el.value; } },
     acts: {
@@ -1324,7 +1335,7 @@
       submit(el, st) {
         if (!can()) return;
         const data = { tz: st.tz, sjdd: st.sjdd, tps: st.tps };
-        if (st.cid) { Store.lfSupplement(st.cid, data); toast('已提交补充材料'); return H5.replace(LOST + '/claimDetail', { id: st.cid }); }
+        if (st.cid) { Store.lfUpdateClaim(st.cid, data); toast('已修改认领申请'); return H5.replace(LOST + '/claimDetail', { id: st.cid }); }
         const c = Store.lfClaim(st.id, data);
         toast('申请已提交');
         H5.replace(LOST + '/claimDetail', { id: c.id });
@@ -1341,13 +1352,21 @@
       const res = c => c.zt === 'reject' ? 'rp-card__res--violation' : ['pending', 'more'].includes(c.zt) ? 'rp-card__res--pending' : '';
       return `<div class="pg">${navbar('我的认领')}
         <div class="rp-tabs">${[['ongoing', '进行中'], ['ended', '已结束']].map(([k, t]) => `<button class="rp-tab ${st.t === k ? 'is-active' : ''}" data-act="tab" data-v="${k}">${t} ${Store.lfMyClaims(k).length}</button>`).join('')}</div>
-        <div class="rp-list">${list.length ? list.map(c => `<button class="rp-card" data-act="go" data-path="${LOST}/claimDetail" data-q="id=${c.id}">
+        <div class="rp-list">${list.length ? list.map(c => `<div class="rp-card">
+            <div data-act="go" data-path="${LOST}/claimDetail" data-q="id=${c.id}">
             <div class="rp-card__bt ellipsis" style="padding-right:0">${esc(c.item.mc)}</div>
             <div class="rp-card__row"><b>${esc(c.item.flLabel)}</b> · ${esc(c.item.xq)} · ${esc(c.item.bgText)}</div>
             <div class="rp-card__row">申请时间：${Store.fmtDate(c.cjsj, true)}　状态：<b>${esc(c.ztLabel)}</b></div>
-            <div class="rp-card__res ${res(c)}">${esc(LF.claimHint(c))}</div></button>`).join('') : `<div class="empty-tip" style="padding-top:20px">${st.t === 'ongoing' ? '暂无进行中的认领' : '暂无已结束的认领'}</div>`}</div></div>`;
+            <div class="rp-card__res ${res(c)}">${esc(LF.claimHint(c))}</div></div>
+            ${['pending', 'more'].includes(c.zt) ? `<div class="post-card__ops"><button data-act="editClaim" data-id="${c.id}">修改</button><button class="danger" data-act="cancelClaim" data-id="${c.id}">撤回</button></div>` : ''}</div>`).join('') : `<div class="empty-tip" style="padding-top:20px">${st.t === 'ongoing' ? '暂无进行中的认领' : '暂无已结束的认领'}</div>`}</div></div>`;
     },
-    acts: { tab(el, st) { st.t = el.dataset.v; H5.refresh(); } }
+    acts: {
+      tab(el, st) { st.t = el.dataset.v; H5.refresh(); },
+      editClaim(el) { H5.go(LOST + '/claim', { claim: el.dataset.id }); },
+      async cancelClaim(el) {
+        if (await UI.confirm('撤回后可以修改内容再重新提交。', { title: '撤回认领申请', ok: '确认撤回' })) { Store.lfCancelClaim(el.dataset.id); toast('已撤回'); }
+      }
+    }
   };
 
   H5.pages[LOST + '/claimDetail'] = {
@@ -1358,7 +1377,8 @@
       if (!c || c.sqrid !== Store.me().id) return `<div class="pg">${navbar('认领详情')}<div class="empty-tip">申请记录不存在</div></div>`;
       const it = c.item;
       const tone = c.zt === 'reject' ? 'rd__banner--violation' : ['pass', 'done'].includes(c.zt) ? 'rd__banner--done' : '';
-      const foot = c.zt === 'more' ? `<button class="btn-primary" data-act="go" data-path="${LOST}/claim" data-q="claim=${c.id}">补充材料</button>`
+      const editable = ['pending', 'more'].includes(c.zt);
+      const foot = editable ? `<button class="btn-ghost" data-act="cancel">撤回</button><button class="btn-primary" data-act="edit">修改</button>`
         : c.zt === 'pass' && c.clr ? `<button class="btn-primary" data-act="pm" data-uid="${c.clr}">联系核对人</button>` : '';
       return `<div class="pg">${navbar('认领详情')}<div class="rd" style="padding-bottom:${foot ? 110 : 30}px">
         <div class="rd__banner ${tone}"><h4>${esc(c.ztLabel)}</h4><p>${esc(LF.claimHint(c))}</p></div>
@@ -1368,6 +1388,12 @@
         <div class="rd__sec"><h5>处理进度</h5>${stepsHtml(LF.claimSteps(c))}</div>
         <div class="rd__tip">核对结果和交接安排会通过「消息 · 失物」和私信通知你</div></div>
         ${foot ? `<div class="pub__foot">${foot}</div>` : ''}</div>`;
+    },
+    acts: {
+      edit(el, st) { H5.go(LOST + '/claim', { claim: st.id }); },
+      async cancel(el, st) {
+        if (await UI.confirm('撤回后可以修改内容再重新提交。', { title: '撤回认领申请', ok: '确认撤回' })) { Store.lfCancelClaim(st.id); toast('已撤回'); }
+      }
     }
   };
 
@@ -1395,7 +1421,7 @@
       const d = Store.lfDigestGet(st.id);
       if (!d || d.zt !== 'published') return `<div class="pg">${navbar('招领汇总')}<div class="empty-tip">汇总不存在或尚未发布</div></div>`;
       return `<div class="pg">${navbar('招领汇总')}<div class="rd" style="padding-bottom:0">
-        <div class="rd__banner"><h4>${esc(LF.digestTitle(d))}</h4><p>共 ${d.total} 件 · ${esc(LF.digestLine(d))}</p></div>
+        <div class="rd__banner"><h4>${esc(LF.digestTitle(d))}</h4><p>共 ${d.total} 件 · 含团队登记与学生自主登记 · ${esc(LF.digestLine(d))}</p></div>
         <div class="rd__sec"><h5>汇总说明</h5>${kv('分类', d.fls.map(x => esc(x.label) + ' ' + x.n + ' 件').join('、') || '—')}${kv('确认人', esc((d.qrrUser || {}).nc || '资助团队'))}${kv('发布时间', Store.fmtDate(d.qrsj, true))}</div></div>
         <div class="post-list" style="padding-top:0">${d.items.map(it => lfCard(it)).join('')}</div>
         <div class="more-tip"><button data-act="go" data-path="${LOST}/history" style="color:#3087cc">查看历史汇总</button></div></div>`;
@@ -1461,10 +1487,11 @@
           ${can('check') ? row(LOST + '/review', 't=pending', 'profile-icon-security.svg', '待核对申请', '对照特征核验认领人', s.claims) : ''}
           ${can('check') ? row(LOST + '/review', 't=pass', 'profile-icon-message-new.svg', '待交接', '发送交接安排并确认归还', pass) : ''}
           ${can('register') ? row(LOST + '/publish', 'team=1', 'profile-icon-posts-new.svg', '登记物品', '登记交到服务点的物品', 0) : ''}
+          ${can('register') ? row(LOST + '/batch', '', 'profile-icon-file.svg', '批量登记校园卡', '一次登记多张，顺序为学院、学号、姓名', 0) : ''}
           ${can('check') ? row(LOST + '/return', '', 'profile-icon-drafts.svg', '批量归还', '线下领取后批量标记归还', 0) : ''}
         </div>
         <div class="me-list">
-          ${can('register') ? `<button class="me-list__item" data-act="digest"><img src="${A}profile-icon-file.svg" alt="">${twoLine('今日招领汇总', dg ? `待确认 · ${dg.total} 件，确认后发布` : Store.lfTodayDigest() ? '已发布，有新增登记时可重新生成' : '生成今天团队登记的物品汇总')}${dg ? '<span class="me-list__new">待确认</span>' : ''}${chev}</button>` : ''}
+          ${can('register') ? `<button class="me-list__item" data-act="digest"><img src="${A}profile-icon-file.svg" alt="">${twoLine('今日招领汇总', dg ? `待确认 · ${dg.total} 件，确认后发布` : Store.lfTodayDigest() ? '已发布，有新增登记时可重新生成' : '生成今天的招领汇总，含团队和学生登记')}${dg ? '<span class="me-list__new">待确认</span>' : ''}${chev}</button>` : ''}
           ${row(LOST + '/station', '', 'lx-icon-lost-tab.svg', '服务点与值班', '查看各服务点保管情况', 0)}
         </div>
         <div class="more-tip" style="font-weight:500">今日新增 ${s.todayNew} 件 · 待认领 ${s.pending} 件 · 今日归还 ${s.todayReturned} 件${s.idle ? ` · ${s.idle} 件超过 30 天未更新，请到 PC 管理端确认` : ''}</div></div>`;
@@ -1474,14 +1501,81 @@
         const today = Store.startOfDay(Date.now());
         let d = Store.lfDigests({ published: false }).find(x => x.isToday && x.zt === 'draft');
         if (!d) {
-          if (!(await UI.confirm(`将汇总今天团队登记的 ${Store.lfDayItems(today).length} 件物品，生成后需确认才会发布。`, { title: '生成今日汇总', ok: '生成' }))) return;
+          if (!(await UI.confirm(`将汇总今天登记的 ${Store.lfDayItems(today).length} 件物品（含团队和学生），生成后需确认才会发布。`, { title: '生成今日汇总', ok: '生成' }))) return;
           d = Store.lfDigestGet(Store.lfDigestGenerate(today).id);
         }
-        if (!d.total) return toast('今天还没有团队登记的物品');
+        if (!d.total) return toast('今天还没有登记的物品');
         if (await UI.confirm(`${LF.digestTitle(d)}：共 ${d.total} 件（${LF.digestLine(d)}）。确认信息无误并发布到招领页？`, { title: '确认发布', ok: '确认发布' })) { Store.lfDigestPublish(d.id); toast('汇总已发布'); }
       }
     }
   };
+
+  /* 批量登记校园卡，字段顺序与网页端一致：学院、学号、姓名、校区 */
+  const CARD_SAMPLE = '冶金与环境学院 8225130218 王一鸣 本部\n商学院 8209220311 陈思远 新校\n湘雅医学院 8301210127 刘可欣 湘雅\n交通运输工程学院 8226010203';
+  H5.pages[LOST + '/batch'] = {
+    title: '批量登记校园卡',
+    init() {
+      if (!Store.lfCan('register')) return { denied: true };
+      const p = Store.lfMyPoints()[0];
+      return { bgdid: p ? p.id : '', xq: p && p.xq ? p.xq : '', dd: '', rq: Store.fmtDate(Date.now()), text: '', parsed: null };
+    },
+    render(st) {
+      if (st.denied || !Store.lfCan('register')) return teamOnly('批量登记校园卡');
+      const points = Store.lfMyPoints().map(p => ({ value: p.id, label: p.mc }));
+      const grid = (k, opts, cur) => `<div class="rp-types" style="margin-bottom:18px">${opts.map(o => `<button class="rp-type ${String(cur) === String(o.value) ? 'is-cur' : ''}" data-act="pick" data-k="${k}" data-v="${esc(o.value)}">${esc(o.label)}</button>`).join('')}</div>`;
+      const okN = st.parsed ? st.parsed.filter(r => r.ok).length : 0;
+      return `<div class="pg pub">${navbar('批量登记校园卡')}
+        <div class="pub__card">
+          <div class="pub__label"><i>*</i>保管服务点</div>${grid('bgdid', points, st.bgdid)}
+          <div class="pub__label">默认校区</div>${grid('xq', Store.LF_XQ.map(x => ({ value: x, label: x })), st.xq)}
+          <div class="pub__label">捡到日期</div>
+          <label class="pub__field"><input type="date" data-keep="rq" data-in="meta" data-k="rq" max="${Store.fmtDate(Date.now())}" value="${esc(st.rq)}"></label>
+          <div class="pub__label">默认地点</div>
+          <label class="pub__field"><input data-keep="dd" data-in="meta" data-k="dd" maxlength="40" placeholder="如：图书馆值班台（选填）" value="${esc(st.dd)}"></label>
+          <div class="pub__label"><i>*</i>粘贴校园卡信息</div>
+          <div class="pub__hint">每行一张卡，按学院、学号、姓名、校区用空格隔开。未写校区时使用默认校区。</div>
+          <label class="pub__field pub__field--area"><textarea data-keep="cards" data-in="cards" maxlength="2000" placeholder="冶金与环境学院 8225130218 王一鸣 本部">${esc(st.text)}</textarea></label>
+          <div class="post-card__ops"><button data-act="sample">填入示例</button><button data-act="parse">识别</button></div>
+          ${st.parsed ? `<div class="pub__hint" style="margin-top:14px">共 ${st.parsed.length} 行，可登记 ${okN} 张${st.parsed.length - okN ? `，${st.parsed.length - okN} 行需修改` : ''}</div>
+            ${st.parsed.map((r, i) => `<div class="rd__post" style="margin-top:10px"><div class="rd__post-bt">${i + 1}. ${r.ok ? '可登记' : esc(r.err)}</div>
+              <div class="rd__post-nr">学院：${esc(r.xy || '—')} · 学号：${esc(r.xh || '—')} · 姓名：${esc(r.xm || '—')}</div>
+              <div class="rd__post-nr">校区：${esc(r.xq || '—')}${r.xm ? ' · 前台显示：校园卡 · ' + esc(Store.maskName(r.xm)) : ''}</div>
+              <div class="rd__post-nr">${esc(r.line)}</div></div>`).join('')}` : ''}
+        </div>
+        <div class="pub__foot"><button class="btn-ghost" data-act="back">返回</button><button class="btn-primary" data-act="submit" ${okN ? '' : 'disabled'}>确认登记${okN ? ' ' + okN + ' 张' : ''}</button></div></div>`;
+    },
+    inputs: {
+      cards(el, st) { st.text = el.value; },
+      meta(el, st) { st[el.dataset.k] = el.value; }
+    },
+    acts: {
+      pick(el, st) {
+        st[el.dataset.k] = el.dataset.v;
+        if (el.dataset.k === 'bgdid') { const p = Store.lfPoint(el.dataset.v); if (p && p.xq) st.xq = p.xq; }
+        H5.refresh();
+      },
+      sample(el, st) {
+        st.text = CARD_SAMPLE; st.parsed = null;
+        const ta = view.querySelector('[data-keep="cards"]');
+        if (ta) ta.value = CARD_SAMPLE;
+        H5.refresh();
+      },
+      parse(el, st) {
+        if (!st.text.trim()) return toast('请先粘贴校园卡信息');
+        st.parsed = Store.lfParseCards(st.text, { xq: st.xq });
+        H5.refresh();
+      },
+      submit(el, st) {
+        const rows = (st.parsed || []).filter(r => r.ok);
+        if (!st.bgdid) return toast('请选择保管服务点');
+        if (!rows.length) return toast('请先识别出可登记的校园卡');
+        const n = Store.lfBatchCreate(rows, { bgdid: st.bgdid, xq: st.xq, dd: st.dd || '服务点登记', sj: st.rq ? new Date(st.rq + 'T12:00').getTime() : undefined });
+        toast('已登记 ' + n + ' 张校园卡');
+        H5.back();
+      }
+    }
+  };
+
   H5.pages[LOST + '/review'] = {
     title: '认领核对',
     init(q) { return { t: ['pending', 'more', 'pass'].includes(q.t) ? q.t : 'pending' }; },

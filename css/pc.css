@@ -330,8 +330,9 @@ a{color:#3087cc;text-decoration:none}
 .dept-rank__empty{margin:0;padding:.04167rem 0;text-align:center;font-size:.06771rem;color:#9096a2}
 .rules-card{border:.00521rem solid #fff;border-radius:.04167rem;padding:.10417rem;background:linear-gradient(180deg,#edf8ff 8%,#fff);display:flex;flex-direction:column;gap:.10417rem}
 .rules-card__list{display:flex;flex-direction:column;gap:.05208rem}
-.rules-card__item{width:100%;display:flex;align-items:center;justify-content:space-between;gap:.05208rem;padding:.07813rem .07813rem .05208rem;border:none;border-radius:.04167rem;background:#fff;text-align:left}
-.rules-card__item:hover .rules-card__name{color:#3087cc}
+.rules-card__item{width:100%;display:flex;align-items:center;justify-content:space-between;gap:.05208rem;padding:.07813rem .07813rem .05208rem;border:none;border-radius:.04167rem;background:#fff;text-align:left;cursor:pointer}
+.rules-card__item:hover .rules-card__name,.rules-card__item.is-active .rules-card__name{color:#3087cc}
+.rules-card__item.is-active{box-shadow:inset 0 0 0 .01042rem #3087cc}
 .rules-card__badge{width:.20833rem;height:.20833rem;flex-shrink:0}
 .rules-card__name{font-size:.08333rem;font-weight:500;color:#1e323f;line-height:1.2}
 .rules-card__desc{margin-top:.01042rem;font-size:.0625rem;color:#627079}

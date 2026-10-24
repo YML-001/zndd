@@ -829,7 +829,7 @@
   PC.lfCard = function (it) {
     const found = it.lx === 'found';
     return `<article class="post-card" data-lf="${it.id}">
-      <div class="post-card__user">${avatar(it)}<div><div class="post-card__nick">${esc(it.fbrnc)} ${LF.teamBadge(it)}</div><div class="post-card__sub">${S.relTime(it.fbsj)} · ${it.lyLabel}</div></div></div>
+      <div class="post-card__user">${avatar(it)}<div><div class="post-card__nick">${esc(it.fbrnc)} ${LF.sourceMark(it)} ${LF.teamBadge(it)}</div><div class="post-card__sub">${S.relTime(it.fbsj)} · ${it.lyLabel}</div></div></div>
       <div class="post-card__body">
         <div class="post-card__panel"><div>
           <div class="post-card__title-row"><span class="lx-tag lx--blue"><img src="assets/pc/tab-lost.svg" alt="">${esc(it.flLabel)}</span><h3 class="post-card__title">${esc(it.mc)}</h3><span class="tag tag--${LF.pcTag(it.tone)}">${esc(it.ztLabel)}</span></div>
@@ -839,7 +839,7 @@
           ${found ? `<span class="post-card__stat">${esc(it.bgText)}</span>` : ''}
           <span class="post-card__stat">编号 ${esc(it.bh)}</span>
           ${it.canReview && it.claimN ? `<span class="post-card__stat c-warn">${it.claimN} 条认领待处理</span>` : ''}
-          ${!found && it.clueN ? `<span class="post-card__stat c-warn">${it.clueN} 条线索</span>` : ''}
+          ${!found && it.isMine && it.clueN ? `<span class="post-card__stat c-warn">${it.clueN} 条线索</span>` : ''}
           ${it.myClaim ? '<span class="post-card__stat c-primary">已申请认领</span>' : ''}
         </div></div>
       </div>
@@ -968,7 +968,7 @@
     const it = S.lfGet(itemId);
     const old = claimId ? S.lfClaimGet(claimId) : null;
     UI.open({
-      kind: 'dialog', title: old ? '补充认领材料' : '申请认领', width: '6.4rem', state: { tps: old ? old.tps.slice() : [] },
+      kind: 'dialog', title: old && ['pending', 'more'].includes(old.zt) ? '修改认领申请' : old ? '认领申请' : '申请认领', width: '6.4rem', state: { tps: old ? old.tps.slice() : [] },
       render: l => `<div class="rdd__body">
         <div class="rdd__post"><div class="f-c" style="gap:.05208rem;min-width:0"><span class="lx-tag lx--blue"><img src="assets/pc/tab-lost.svg" alt="">${esc(it.flLabel)}</span><b class="ellipsis">${esc(it.mc)}</b><span class="c-light" style="font-size:.0625rem">${esc(it.xq)} · ${esc(it.dd)} · ${esc(it.sjText)}</span></div></div>
         ${old ? `<div class="rdd__banner rdd__banner--pending"><div><div class="rdd__banner-title">需要补充材料</div><div class="rdd__banner-sub">${esc(old.bcyq)}</div></div></div>` : ''}
@@ -979,13 +979,14 @@
             <div class="thumbs">${l.state.tps.map((t, i) => `<div class="thumb"><img src="${esc(imgSrc(t))}" alt=""><button class="thumb__del" data-del="${i}">×</button></div>`).join('')}<button class="btn btn--plain" data-upload>上传图片</button></div>
             <div class="form-item__hint">可上传购买记录、物品照片等，最多 3 张；材料仅核对人可见</div></div></div>
         </div></div>
-        <div class="dlg-foot"><button class="btn" data-close>取消</button><button class="btn btn--primary" data-ok>${old ? '提交补充' : '提交申请'}</button></div>`,
+        <div class="dlg-foot"><button class="btn" data-close>取消</button><button class="btn btn--primary" data-ok>${old && ['pending', 'more'].includes(old.zt) ? '保存修改' : '提交申请'}</button></div>`,
       on: {
         'click [data-upload]': async (e, el, l) => { const imgs = await UI.pickImages({ max: 3, existing: l.state.tps.length }); if (imgs.length) { l.state.tps.push(...imgs); l.refresh(); } },
         'click [data-del]': (e, el, l) => { l.state.tps.splice(+el.dataset.del, 1); l.refresh(); },
         'click [data-ok]': (e, el, l) => {
           const data = { tz: l.body.querySelector('[data-keep="tz"]').value, sjdd: l.body.querySelector('[data-keep="sjdd"]').value, tps: l.state.tps };
-          if (old) { S.lfSupplement(old.id, data); toast('已提交补充材料', 'success'); }
+          if (old && ['pending', 'more'].includes(old.zt)) { S.lfUpdateClaim(old.id, data); toast('已修改认领申请', 'success'); }
+          else if (old) { S.lfSupplement(old.id, data); toast('已提交补充材料', 'success'); }
           else { S.lfClaim(itemId, data); toast('认领申请已提交，核对结果会通过消息通知你', 'success'); }
           l.close();
         }
@@ -1004,7 +1005,7 @@
         const p = it.point;
         const my = it.myClaim ? S.lfClaimGet(it.myClaim.id) : null;
         const claims = it.canReview ? S.lfClaimsOf(it.id) : [];
-        const clues = found ? [] : S.lfClues(it.id);
+        const clues = !found && it.isMine ? S.lfClues(it.id) : [];
         const team = !it.isMine && (it.canEdit || it.canReturn);
         const btns = LF.detailActions(it, my);
         const done = ['returned', 'found'].includes(it.ztKey);
@@ -1027,10 +1028,13 @@
             ${it.bgfs === 'point' && p ? row(cell('保管方式', esc(it.bgText)), cell('值班安排', esc(p.zbap)), cell('联系方式', esc(p.lxfs))) + fullRow('地址', esc(p.dz || '由团队确认并维护')) + (p.lstz ? fullRow('临时调整', `<span class="c-warn">${esc(p.lstz)}</span>`) : '')
               : row(cell('保管方式', esc(it.bgText)), cell('联系方式', '站内私信发布同学'), cell('核对人', '发布同学'))}
             ${fullRow('领取须知', '核对通过后按约定时间领取，请携带校园卡或有效证件')}</div></div>` : ''}
-          ${my ? `<div>${secTitle('我的认领进度')}${lfSteps(LF.claimSteps(my))}
-            ${my.zt === 'more' ? `<div class="f-c" style="justify-content:flex-end;margin-top:.0625rem"><button class="btn btn--sm btn--primary" data-act="supplement" data-cid="${my.id}">补充材料</button></div>` : ''}</div>` : ''}
+          ${my && ['pending', 'more'].includes(my.zt) ? `<div>${secTitle('我的认领进度')}${lfSteps(LF.claimSteps(my))}
+            <div class="f-c" style="justify-content:flex-end;gap:.04167rem;margin-top:.0625rem"><button class="btn btn--sm" data-act="editClaim" data-cid="${my.id}">修改</button><button class="btn btn--sm btn--plain-danger" data-act="cancelClaim" data-cid="${my.id}">撤回</button></div></div>`
+            : my ? `<div>${secTitle('我的认领进度')}${lfSteps(LF.claimSteps(my))}</div>` : ''}
           ${claims.length ? `<div>${secTitle(`认领申请（${claims.length}）`)}<div class="flex" style="flex-direction:column;gap:.0625rem">${claims.map(PC.lfClaimBox).join('')}</div></div>` : ''}
-          ${found ? '' : `<div>${secTitle(`${it.isMine ? '收到的线索' : '同学提供的线索'}（${clues.length}）`)}${clues.length ? `<div class="flex" style="flex-direction:column;gap:.0625rem">${clues.map(c => cluePost(c, it.isMine)).join('')}</div>` : `<p class="rdd__tip" style="margin:0">${it.isMine ? '暂无线索，有同学提供时会通过私信通知你' : '还没有同学提供线索'}</p>`}</div>`}
+          ${found ? '' : it.isMine
+            ? `<div>${secTitle(`收到的线索（${clues.length}）`)}${clues.length ? `<div class="flex" style="flex-direction:column;gap:.0625rem">${clues.map(c => cluePost(c, true)).join('')}</div>` : '<p class="rdd__tip" style="margin:0">暂无线索，有同学提供时会通过私信通知你</p>'}</div>`
+            : `<div>${secTitle('同学提供的线索')}<p class="rdd__tip" style="margin:0">线索内容仅寻物发布者可见。见过这件物品，可以在下方提供线索。</p></div>`}
           ${it.isMine || team ? `<div>${secTitle('处理记录')}${PC.lfLogSteps(it)}</div>` : ''}
           <p class="rdd__tip">请勿公开完整学号、身份证号等信息；虚假认领将按社区规范处理</p>
         </div>
@@ -1042,7 +1046,10 @@
         'click [data-lfc]': (e, el) => PC.lfClaimAct(el.dataset.lfc, el.dataset.cid),
         'click [data-act]': async (e, el, l) => {
           const a = el.dataset.act, it = S.lfGet(id);
-          if (a === 'supplement') openLfClaim(id, el.dataset.cid);
+          if (a === 'supplement' || a === 'editClaim') openLfClaim(id, el.dataset.cid);
+          else if (a === 'cancelClaim') {
+            if (await UI.confirm('撤回后可以修改内容再重新提交。', { title: '撤回认领申请', ok: '确认撤回', danger: true })) { S.lfCancelClaim(el.dataset.cid); toast('已撤回', 'success'); }
+          }
           else if (a === 'claim') openLfClaim(id);
           else if (a === 'myClaim') l.body.querySelector('.rdd__step') && l.body.querySelector('.rdd__step').scrollIntoView({ behavior: 'smooth', block: 'center' });
           else if (a === 'contact') {
@@ -1090,14 +1097,20 @@
             ? (claims.length ? claims.map(c => `<div class="msg-item" data-open-lf="${c.itemId}">
                 <span class="avatar avatar--md avatar--txt" style="background:#3087CC">${esc((c.item ? c.item.flLabel : '物').slice(0, 1))}</span>
                 <div class="msg-item__main"><div class="msg-item__name">${esc(c.item ? c.item.mc : '物品已删除')}</div><div class="msg-item__last">${esc(LF.claimHint(c))}</div></div>
-                <div class="msg-item__side"><span>${S.relTime(c.gxsj)}</span><span class="tag tag--${LF.pcTag(c.tone)}">${esc(c.ztLabel)}</span></div></div>`).join('') + '<p class="bbs-home__tip">暂无更多认领</p>' : PC.empty('还没有认领记录'))
+                <div class="msg-item__side"><span>${S.relTime(c.gxsj)}</span><span class="tag tag--${LF.pcTag(c.tone)}">${esc(c.ztLabel)}</span>
+                  ${['pending', 'more'].includes(c.zt) ? `<span class="f-c" style="gap:.03125rem"><button type="button" class="btn btn--sm" data-edit-claim="${c.id}">修改</button><button type="button" class="btn btn--sm btn--plain-danger" data-cancel-claim="${c.id}">撤回</button></span>` : ''}</div></div>`).join('') + '<p class="bbs-home__tip">暂无更多认领</p>' : PC.empty('还没有认领记录'))
             : (items.length ? items.map(PC.lfCard).join('') + '<p class="bbs-home__tip">暂无更多</p>' : PC.empty(t === 'found' ? '还没有发布捡到的物品' : '还没有发布寻物信息'))}
           </div></div>`;
       },
       on: {
         'click [data-tab]': (e, el, l) => { l.state.tab = el.dataset.tab; l.refresh(); },
+        'click [data-edit-claim]': (e, el) => { e.stopPropagation(); const c = S.lfClaimGet(el.dataset.editClaim); if (c) openLfClaim(c.itemId, c.id); },
+        'click [data-cancel-claim]': async (e, el) => {
+          e.stopPropagation();
+          if (await UI.confirm('撤回后可以修改内容再重新提交。', { title: '撤回认领申请', ok: '确认撤回', danger: true })) { S.lfCancelClaim(el.dataset.cancelClaim); toast('已撤回', 'success'); }
+        },
         'click [data-lf]': (e, el) => PC.openLost(el.dataset.lf),
-        'click [data-open-lf]': (e, el) => PC.openLost(el.dataset.openLf)
+        'click [data-open-lf]': (e, el) => { if (e.target.closest('[data-edit-claim],[data-cancel-claim]')) return; PC.openLost(el.dataset.openLf); }
       }
     });
   }
@@ -1113,15 +1126,36 @@
           ${list.length ? `<div class="rpd__grid" style="grid-template-columns:repeat(4,1fr);margin:0">${list.slice(0, 8).map(x => `<button class="rpd__type ${x.id === d.id ? 'is-active' : ''}" data-d="${x.id}">${S.fmtDate(x.rq).slice(5)}${x.isToday ? ' 今日' : ''}</button>`).join('')}</div>` : ''}
           ${d ? `<div class="rdd__banner"><div><div class="rdd__banner-title">${esc(LF.digestTitle(d))} · 共 ${d.total} 件</div><div class="rdd__banner-sub">${esc(LF.digestLine(d))} · ${d.qrrUser ? esc(d.qrrUser.nc) + ' 确认发布' : ''}</div></div></div>
             <div class="rdd__table">${row(...(d.fls.length ? d.fls : [{ label: '—', n: 0 }]).slice(0, 3).map(f => cell(esc(f.label), f.n + ' 件')))}</div>
-            <div class="table-wrap"><table class="table"><thead><tr><th>信息编号</th><th>物品</th><th>校区</th><th>保管</th><th>状态</th></tr></thead>
-              <tbody>${d.items.map(it => `<tr data-lf="${it.id}" style="cursor:pointer"><td>${esc(it.bh)}</td><td>${esc(it.mc)}</td><td>${esc(it.xq)}</td><td>${esc(it.bgText)}</td><td><span class="tag tag--${LF.pcTag(it.tone)}">${esc(it.ztLabel)}</span></td></tr>`).join('')}</tbody></table></div>` : PC.empty('暂无已发布的汇总')}
-          <p class="rdd__tip">资助团队每天整理当日登记的物品，确认后在此发布；领取方式见各物品详情</p>
+            <div class="table-wrap"><table class="table"><thead><tr><th>信息编号</th><th>物品</th><th>发布端</th><th>校区</th><th>保管</th><th>状态</th></tr></thead>
+              <tbody>${d.items.map(it => `<tr data-lf="${it.id}" style="cursor:pointer"><td>${esc(it.bh)}</td><td>${esc(it.mc)}</td><td>${LF.sourceMark(it)}</td><td>${esc(it.xq)}</td><td>${esc(it.bgText)}</td><td><span class="tag tag--${LF.pcTag(it.tone)}">${esc(it.ztLabel)}</span></td></tr>`).join('')}</tbody></table></div>` : PC.empty('暂无已发布的汇总')}
+          <p class="rdd__tip">汇总包含当日团队登记和学生自主登记的物品，每条标明发布端；领取方式见各物品详情</p>
         </div>`;
       },
       on: {
         'click [data-d]': (e, el, l) => { l.state.id = el.dataset.d; l.refresh(); },
         'click [data-lf]': (e, el) => PC.openLost(el.dataset.lf),
         'click [data-preview]': (e, el) => { e.stopPropagation(); UI.preview(el.src); }
+      }
+    });
+  }
+
+  function openPointSchedule(id) {
+    const p = S.lfPoint(id);
+    if (!p) return;
+    UI.open({
+      kind: 'dialog', title: '修正时间地点', width: '4.8rem',
+      render: () => `<div class="form">
+        <div class="form-item"><label class="form-item__label">服务点</label><div class="form-item__ctrl" style="line-height:.16667rem">${esc(p.mc)}</div></div>
+        <div class="form-item"><label class="form-item__label">地址</label><div class="form-item__ctrl"><input class="input" data-k="dz" data-keep="dz" maxlength="40" value="${esc(p.dz)}" placeholder="如：校本部学生活动中心一楼"></div></div>
+        <div class="form-item"><label class="form-item__label req">值班安排</label><div class="form-item__ctrl"><input class="input" data-k="zbap" data-keep="zbap" maxlength="40" value="${esc(p.zbap)}" placeholder="如：周一至周五 12:00-14:00、17:30-19:30"></div></div>
+        <div class="form-item"><label class="form-item__label">联系方式</label><div class="form-item__ctrl"><input class="input" data-k="lxfs" data-keep="lxfs" maxlength="40" value="${esc(p.lxfs)}"></div></div>
+        <div class="form-item"><label class="form-item__label">临时调整</label><div class="form-item__ctrl"><input class="input" data-k="lstz" data-keep="lstz" maxlength="40" value="${esc(p.lstz)}" placeholder="留空则不展示"><div class="form-item__hint">按实际值班时间修正，前台服务点信息会同步更新</div></div></div>
+      </div><div class="dlg-foot"><button class="btn" data-close>取消</button><button class="btn btn--primary" data-ok>保存</button></div>`,
+      on: {
+        'click [data-ok]': (e, el, l) => {
+          const v = {}; l.body.querySelectorAll('[data-k]').forEach(i => { v[i.dataset.k] = i.value.trim(); });
+          S.lfUpdatePointSchedule(id, v); toast('已按实际安排更新', 'success'); l.close();
+        }
       }
     });
   }
@@ -1137,7 +1171,7 @@
       const filtered = st.kw || st.xq || st.fl || +st.days || st.ly;
       const team = S.lfIsTeam(), tstats = team ? S.lfStats() : null;
       const sel = (k, opts) => `<select class="select" data-f="${k}" style="width:.83333rem">${opts.map(o => `<option value="${o.value}" ${String(st[k]) === String(o.value) ? 'selected' : ''}>${o.label}</option>`).join('')}</select>`;
-      const sideItem = (act, name, desc, badge) => `<button class="rules-card__item" data-act="${act}"><span><div class="rules-card__name">${name}${badge ? ` <span class="tag tag--orange">${badge}</span>` : ''}</div><div class="rules-card__desc">${desc}</div></span><span class="rules-card__arrow"><img src="assets/pc/i-RulesLinksCard-0.svg" alt=""></span></button>`;
+      const sideItem = (act, name, desc, badge, active) => `<button type="button" class="rules-card__item${active ? ' is-active' : ''}" data-act="${act}"><span><div class="rules-card__name">${name}${badge ? ` <span class="tag tag--orange">${badge}</span>` : ''}</div><div class="rules-card__desc">${desc}</div></span><span class="rules-card__arrow"><img src="assets/pc/i-RulesLinksCard-0.svg" alt=""></span></button>`;
       return `<div class="rp-page" data-keep-scroll="lost">
         <div class="bbs-home__layout" style="padding:.08333rem .10417rem .10417rem">
           <div class="bbs-home__main">
@@ -1173,13 +1207,13 @@
                 <div class="profile-card__stat"><span class="profile-card__num profile-card__num--green">${sta.seeking}</span><span class="profile-card__label">寻找中</span></div>
               </div>
               <div class="rules-card__list">
-                ${sideItem('digest', dg ? esc(LF.digestTitle(dg)) : '今日汇总', dg ? `共 ${dg.total} 件 · ${esc(LF.digestLine(dg))}` : last ? `今日汇总未发布 · 最近 ${S.fmtDate(last.rq).slice(5)}` : '暂无汇总')}
-                ${sideItem('teamOnly', '只看团队登记', '资助团队登记、在服务点保管的物品')}
+                ${sideItem('digest', dg ? esc(LF.digestTitle(dg)) : '今日汇总', dg ? `共 ${dg.total} 件 · 含团队与学生 · ${esc(LF.digestLine(dg))}` : last ? `今日汇总未发布 · 最近 ${S.fmtDate(last.rq).slice(5)}` : '暂无汇总')}
+                ${sideItem('teamOnly', '只看团队登记', st.ly === 'team' ? '当前列表只显示团队登记，再点一次恢复全部' : '资助团队登记、在服务点保管的物品', st.ly === 'team' ? '筛选中' : '', st.ly === 'team')}
               </div>
             </section>
             <section class="rules-card">
               <div class="side-head"><h3 class="side-head__title">服务点与值班</h3><span class="underline-deco"></span></div>
-              <div class="rules-card__list">${S.lfPoints().slice(0, 5).map(p => `<div class="rules-card__item" style="cursor:default"><span style="min-width:0"><div class="rules-card__name">${esc(p.mc)}</div><div class="rules-card__desc">${esc(p.dz || '由团队确认地址')} · ${esc(p.zbap)}</div>${p.lstz ? `<div class="rules-card__desc c-warn">${esc(p.lstz)}</div>` : ''}</span></div>`).join('')}</div>
+              <div class="rules-card__list">${S.lfPoints().slice(0, 5).map(p => `<div class="rules-card__item" style="cursor:default"><span style="min-width:0"><div class="rules-card__name">${esc(p.mc)}</div><div class="rules-card__desc">${esc(p.dz || '由团队确认地址')} · ${esc(p.zbap)}</div>${p.lstz ? `<div class="rules-card__desc c-warn">${esc(p.lstz)}</div>` : ''}</span>${S.lfCanEditPoint(p.id) ? `<button type="button" class="btn-link" data-act="fixPoint" data-id="${p.id}">修正</button>` : ''}</div>`).join('')}</div>
             </section>
             <section class="rules-card">
               <div class="side-head"><h3 class="side-head__title">我的失物招领</h3><span class="underline-deco"></span></div>
@@ -1208,7 +1242,8 @@
         else if (a === 'clearFilter') { Object.assign(st, { kw: '', xq: '', fl: '', days: 0, ly: '' }); root.querySelector('[data-keep="lfkw"]').value = ''; PC.refresh(); }
         else if (a === 'pubLost' || a === 'pubFound') { if (PC.canInteract()) PC.go(LOST + '/publish', { lx: a === 'pubLost' ? 'lost' : 'found' }); }
         else if (a === 'digest') openDigests();
-        else if (a === 'teamOnly') { Object.assign(st, { lx: 'found', ly: 'team' }); PC.refresh(); }
+        else if (a === 'teamOnly') { st.lx = 'found'; st.ly = st.ly === 'team' ? '' : 'team'; st.limit = 10; toast(st.ly === 'team' ? '已只看团队登记' : '已显示全部来源', 'success'); PC.refresh(); }
+        else if (a === 'fixPoint') openPointSchedule(el.dataset.id);
         else if (a === 'myFound') openMyLost('found');
         else if (a === 'myClaims') openMyLost('claims');
         else if (a === 'work') PC.go('/bbs/admin/lost/items');

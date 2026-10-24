@@ -72,10 +72,21 @@
 
   LF.digestLine = d => d && d.total ? d.groups.map(g => `${g.xq} ${g.n} 件`).join(' · ') : '今日暂无新增';
   LF.digestTitle = d => `${S.fmtDate(d.rq)} 招领汇总`;
+  LF.sourceMark = (it, where) => {
+    const team = !!(it && it.isTeam);
+    const text = team ? '团队' : '学生';
+    if (where === 'admin') return `<span class="status-tag ${team ? 'status-tag--blue' : 'status-tag--topped'}">${text}</span>`;
+    if (where === 'h5') return `<span class="cmt__tag"${team ? '' : ' style="background:#f08c2a"'}>${text}</span>`;
+    return `<span class="tag ${team ? 'tag--blue' : 'tag--orange'}">${text}</span>`;
+  };
 
   // 认领进度：提交申请 → 核对材料 → 安排交接 → 完成归还
   LF.claimSteps = c => {
     const t = act => { const l = c.logs.slice().reverse().find(x => x.act === act); return l ? S.fmtDate(l.t, true) : ''; };
+    if (c.zt === 'cancel') return [
+      { title: '提交申请', state: 'done', time: S.fmtDate(c.cjsj, true), desc: '' },
+      { title: '撤回申请', state: 'done', time: S.fmtDate(c.gxsj, true), desc: '申请已撤回，可以重新提交' }
+    ];
     const reviewed = ['pass', 'done'].includes(c.zt);
     const steps = [
       { title: '提交申请', state: 'done', time: S.fmtDate(c.cjsj, true), desc: '' },
@@ -94,7 +105,8 @@
     more: '需要补充材料：' + c.bcyq,
     pass: c.jj ? `请于 ${c.jj.sj} 到 ${c.jj.dd} 领取` : '核对通过，等待安排交接',
     reject: '未通过：' + (c.jl || '与登记信息不符'),
-    done: '已完成归还'
+    done: '已完成归还',
+    cancel: '你已撤回申请，可以修改后重新提交'
   })[c.zt];
 
   LF.logText = l => `${S.fmtDate(l.t, true)} · ${l.act}${l.note ? '：' + l.note : ''} · ${(S.user(l.uid) || {}).nc || '系统'}`;

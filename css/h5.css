@@ -123,18 +123,21 @@ a { color: inherit; text-decoration: none; }
 .top5 { padding: 0 20px; }
 .top5__title { display: flex; align-items: center; gap: 8px; font-size: 17px; font-weight: 600; color: #627079; margin: 14px 0 12px; }
 .top5__title svg { flex: none; }
-.top5__box { background: #fff; border-radius: 14px; padding: 10px; display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
-.top5__item { position: relative; display: flex; align-items: center; gap: 10px; min-height: 66px; padding: 12px 14px; border-radius: 10px; background: linear-gradient(180deg, #f6f9fe, #f0f5fc); text-align: left; overflow: hidden; }
-.top5__item--1 { grid-column: span 2; min-height: 72px; background: linear-gradient(90deg, #ffe9ee, #fff3f5); }
-.top5__item--2, .top5__item--3 { flex-direction: column; align-items: flex-start; gap: 8px; min-height: 104px; }
-.top5__item--4, .top5__item--5 { grid-column: span 2; }
-.top5__no { flex: none; font-size: 34px; font-weight: 900; font-style: italic; line-height: 1; letter-spacing: -1px; color: transparent; -webkit-background-clip: text; background-clip: text; background-image: linear-gradient(180deg, #ffc1cf, #ffe4ea); }
+.top5__box { background: #fff; border-radius: 14px; padding: 8px; display: flex; flex-direction: column; gap: 8px; }
+.top5__item { position: relative; display: flex; flex-direction: row; align-items: center; gap: 10px; width: 100%; min-height: 64px; padding: 10px 12px; border-radius: 10px; background: linear-gradient(180deg, #f6f9fe, #f0f5fc); text-align: left; overflow: hidden; }
+.top5__item--1 { background: linear-gradient(90deg, #ffe9ee, #fff3f5); }
+.top5__main { flex: 1; min-width: 0; }
+.top5__no { flex: none; width: 36px; font-size: 28px; font-weight: 900; font-style: italic; line-height: 1; letter-spacing: -1px; color: transparent; -webkit-background-clip: text; background-clip: text; background-image: linear-gradient(180deg, #ffc1cf, #ffe4ea); }
 .top5__item--1 .top5__no { background-image: linear-gradient(180deg, #f0577a, #f78ba3); }
-.top5__item--4 .top5__no, .top5__item--5 .top5__no { font-size: 28px; }
-.top5__bt { font-size: 14px; font-weight: 600; color: #4a5a66; }
-.top5__item--1 .top5__bt { font-size: 16px; color: #1e323f; }
+.top5__bt { font-size: 15px; font-weight: 600; color: #1e323f; line-height: 1.4; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
 .top5__hot { font-size: 12px; color: #627079; margin-top: 4px; font-weight: 600; }
-.top5__arrow { margin-left: auto; color: #f04876; font-size: 18px; font-weight: 700; }
+.fab {
+  position: fixed; right: 20px; bottom: 112px; z-index: 25; width: 70px; height: 70px; border-radius: 50%;
+  background: url(../assets/h5/fab-icon.png) center / cover no-repeat; box-shadow: 0 8px 20px rgba(6, 92, 248, .35);
+  color: #1e323f; font-size: 12px; font-weight: 800; letter-spacing: .5px; line-height: 1.15;
+  text-shadow: 0 0 4px #fff, 0 0 6px #fff;
+  display: flex; align-items: flex-end; justify-content: center; padding-bottom: 12px;
+}
 .post-list { padding: 12px 20px 0; display: flex; flex-direction: column; gap: 14px; }
 .post-card { background: #fff; border-radius: 14px; padding: 16px 20px 14px; text-align: left; width: 100%; display: block; }
 .post-card__head { display: flex; align-items: center; gap: 10px; padding-bottom: 12px; border-bottom: 1px solid #eef1f4; }
@@ -154,11 +157,6 @@ a { color: inherit; text-decoration: none; }
 .post-card__ops button { height: 30px; padding: 0 14px; border-radius: 15px; font-size: 13px; font-weight: 600; border: 1px solid #c7e1f0; color: #3087cc; background: #f6fcff; }
 .post-card__ops button.danger { border-color: #ffd0d0; color: #e64a4a; background: #fff6f6; }
 .post-card__badge { position: absolute; }
-.fab {
-  position: fixed; right: 20px; bottom: 112px; z-index: 25; width: 70px; height: 70px; border-radius: 50%;
-  background: url(../assets/h5/fab-icon.png) center / cover no-repeat; box-shadow: 0 8px 20px rgba(6, 92, 248, .35);
-  color: #fff; font-size: 11px; font-weight: 700; display: flex; align-items: flex-end; justify-content: center; padding-bottom: 14px;
-}
 
 /* ---------- 帖子详情 ---------- */
 .pd { background: #fff; min-height: 100%; padding: 16px 20px 80px; }

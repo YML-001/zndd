@@ -940,15 +940,15 @@
         </div></div>
         ${st.mode === 'card' ? `<div class="panel">
           <div class="sec-title" style="margin-top:0">粘贴校园卡信息</div>
-          <textarea class="textarea" rows="6" data-keep="cards" placeholder="每行一张卡，姓名、学号、学院、校区用空格隔开，例如：&#10;王子墨 8225130103 冶金与环境学院 本部&#10;陈思远 8209220311 商学院 新校">${esc(st.text)}</textarea>
-          <div class="toolbar" style="margin-top:.05208rem"><span class="c-light" style="font-size:.0625rem">自动识别姓名、学号、学院和校区；校区可写简称（本部、新校、铁道…），未写时使用默认校区</span>
+          <textarea class="textarea" rows="6" data-keep="cards" placeholder="每行一张卡，学院、学号、姓名、校区用空格隔开，例如：&#10;冶金与环境学院 8225130218 王子墨 本部&#10;商学院 8209220311 陈思远 新校">${esc(st.text)}</textarea>
+          <div class="toolbar" style="margin-top:.05208rem"><span class="c-light" style="font-size:.0625rem">按学院、学号、姓名、校区识别；校区可写简称（本部、新校、铁道…），未写时使用默认校区</span>
             <div class="toolbar__ops"><button class="btn btn--plain" data-act="sample">填入示例</button><button class="btn btn--primary" data-act="parse">识别</button></div></div>
         </div>
         ${st.parsed ? `<div class="panel panel--grow">
           <div class="toolbar" style="margin-bottom:.05208rem"><span class="c-muted" style="font-size:.0625rem">共 ${st.parsed.length} 行，可登记 ${okN} 张${st.parsed.length - okN ? `，<span class="c-danger">${st.parsed.length - okN} 行需修改</span>` : ''}</span>
             <div class="toolbar__ops"><button class="btn btn--primary" data-act="submitCards" ${okN ? '' : 'disabled'}>确认登记 ${okN} 张</button></div></div>
-          <div class="table-wrap"><table class="table table--admin"><thead><tr><th>序号</th><th>原始内容</th><th>姓名</th><th>学号</th><th>学院</th><th>校区</th><th>前台显示</th><th>识别结果</th></tr></thead>
-          <tbody>${st.parsed.map((r, i) => `<tr><td>${i + 1}</td><td><div class="ellipsis" style="max-width:1.4rem" title="${esc(r.line)}">${esc(r.line)}</div></td><td>${esc(r.xm || '—')}</td><td>${esc(r.xh || '—')}</td><td>${esc(r.xy || '—')}</td><td>${esc(r.xq || '—')}</td>
+          <div class="table-wrap"><table class="table table--admin"><thead><tr><th>序号</th><th>原始内容</th><th>学院</th><th>学号</th><th>姓名</th><th>校区</th><th>前台显示</th><th>识别结果</th></tr></thead>
+          <tbody>${st.parsed.map((r, i) => `<tr><td>${i + 1}</td><td><div class="ellipsis" style="max-width:1.4rem" title="${esc(r.line)}">${esc(r.line)}</div></td><td>${esc(r.xy || '—')}</td><td>${esc(r.xh || '—')}</td><td>${esc(r.xm || '—')}</td><td>${esc(r.xq || '—')}</td>
             <td>${r.xm ? '校园卡 · ' + esc(S.maskName(r.xm)) : '—'}</td><td>${r.ok ? '<span class="status-tag status-tag--normal">可登记</span>' : `<span class="status-tag status-tag--reported">${esc(r.err)}</span>`}</td></tr>`).join('')}</tbody></table></div>
         </div>` : ''}` : `<div class="panel panel--grow">
           <div class="toolbar" style="margin-bottom:.05208rem"><span class="sec-title" style="margin:0">逐行填写物品</span>
@@ -992,7 +992,7 @@
       const base = () => { syncDef(); const d = st.def; return { bgdid: d.bgdid, xq: d.xq, dd: d.dd || '服务点登记', sj: d.rq ? new Date(d.rq + 'T12:00').getTime() : undefined }; };
       UI.delegate(root, 'click', '[data-act]', UI.guard((e, el) => {
         const a = el.dataset.act;
-        if (a === 'sample') { st.text = '王一鸣 8225130218 冶金与环境学院 本部\n陈思远 8209220311 商学院 新校\n刘可欣 8301210127 湘雅医学院 湘雅\n8226010203 交通运输工程学院'; st.parsed = null; root.querySelector('[data-keep="cards"]').value = st.text; PC.refresh(); }
+        if (a === 'sample') { st.text = '冶金与环境学院 8225130218 王一鸣 本部\n商学院 8209220311 陈思远 新校\n湘雅医学院 8301210127 刘可欣 湘雅\n交通运输工程学院 8226010203'; st.parsed = null; root.querySelector('[data-keep="cards"]').value = st.text; PC.refresh(); }
         else if (a === 'parse') {
           st.text = root.querySelector('[data-keep="cards"]').value; syncDef();
           if (!st.text.trim()) { toast('请先粘贴校园卡信息', 'warning'); return; }
@@ -1012,8 +1012,8 @@
   };
 
   /* 每日汇总 */
-  const digestText = d => `【资助团队招领站】${LF.digestTitle(d)}\n今日共登记 ${d.total} 件：${LF.digestLine(d)}\n`
-    + d.items.map((it, i) => `${i + 1}. ${it.mc}（${it.xq} · ${it.dd}）保管：${it.bgText}`).join('\n')
+  const digestText = d => `【资助团队招领站】${LF.digestTitle(d)}\n今日共登记 ${d.total} 件（含团队登记与学生自主登记）：${LF.digestLine(d)}\n`
+    + d.items.map((it, i) => `${i + 1}. [${it.isTeam ? '团队' : '学生'}] ${it.mc}（${it.xq} · ${it.dd}）保管：${it.bgText}`).join('\n')
     + '\n失主可在「中南点点 · 失物招领」提交认领申请，核对通过后按约定时间领取。';
   function openDigest(id) {
     UI.open({
@@ -1024,8 +1024,8 @@
             <div class="info-grid__cell"><b>物品数量：</b>${d.total} 件</div><div class="info-grid__cell"><b>校区分布：</b>${esc(LF.digestLine(d))}</div>
             <div class="info-grid__cell"><b>生成人：</b>${esc((S.user(d.scr) || {}).nc || '系统')} · ${S.fmtDateTime(d.cjsj)}</div><div class="info-grid__cell"><b>确认发布：</b>${d.qrrUser ? esc(d.qrrUser.nc) + ' · ' + S.fmtDateTime(d.qrsj) : '—'}</div></div>
           <div class="sec-title">物品清单</div>
-          <div class="table-wrap" style="max-height:1.6rem"><table class="table table--admin"><thead><tr><th>信息编号</th><th>物品</th><th>种类</th><th>校区</th><th>捡到地点</th><th>保管</th><th>状态</th></tr></thead>
-            <tbody>${d.items.length ? d.items.map(it => `<tr><td>${esc(it.bh)}</td><td>${esc(it.mc)}</td><td>${esc(it.flLabel)}</td><td>${esc(it.xq)}</td><td>${esc(it.dd)}</td><td>${esc(it.bgText)}</td><td>${lfTag(it)}</td></tr>`).join('') : '<tr class="table__empty"><td colspan="7">当天没有团队登记的物品</td></tr>'}</tbody></table></div>
+          <div class="table-wrap" style="max-height:1.6rem"><table class="table table--admin"><thead><tr><th>信息编号</th><th>物品</th><th>发布端</th><th>种类</th><th>校区</th><th>捡到地点</th><th>保管</th><th>状态</th></tr></thead>
+            <tbody>${d.items.length ? d.items.map(it => `<tr><td>${esc(it.bh)}</td><td>${esc(it.mc)}</td><td>${LF.sourceMark(it, 'admin')}</td><td>${esc(it.flLabel)}</td><td>${esc(it.xq)}</td><td>${esc(it.dd)}</td><td>${esc(it.bgText)}</td><td>${lfTag(it)}</td></tr>`).join('') : '<tr class="table__empty"><td colspan="8">当天没有登记的物品</td></tr>'}</tbody></table></div>
           <div class="sec-title">发布文案</div><div class="risk-content">${esc(digestText(d))}</div>
           <div class="dlg-foot"><button class="btn" data-close>关闭</button><button class="btn btn--plain" data-copy>复制文案</button>
             ${d.zt === 'draft' ? '<button class="btn btn--plain" data-regen>重新生成</button><button class="btn btn--primary" data-pub>确认发布</button>' : ''}</div>`;
@@ -1047,14 +1047,14 @@
       const today = S.lfDigests({ published: false }).find(d => d.isToday);
       const todayN = S.lfDayItems(S.startOfDay(Date.now())).length;
       const canGen = S.lfCan('register');
-      return `${!today ? `<div class="warn-bar">⚠ 今日汇总尚未生成：今天团队已登记 ${todayN} 件物品${canGen ? '，可在下方生成后确认发布' : ''}</div>`
+      return `${!today ? `<div class="warn-bar">⚠ 今日汇总尚未生成：今天已登记 ${todayN} 件物品（含团队和学生）${canGen ? '，可在下方生成后确认发布' : ''}</div>`
           : today.zt === 'draft' ? `<div class="warn-bar">⚠ 今日汇总待确认：共 ${today.total} 件，确认后才会在前台招领站展示 ${canGen ? `<button class="btn-link" data-view="${today.id}">去确认</button>` : ''}</div>` : ''}
         <div class="panel"><div class="filter">
           ${fItem('汇总状态', `<select class="select" data-f="zt">${opts([['', '全部'], ['draft', '待确认'], ['published', '已发布']], f.zt)}</select>`)}
           ${fItem('汇总日期', `<input class="input" type="date" data-f="start" value="${f.start}"><span class="filter__sep">-</span><input class="input" type="date" data-f="end" value="${f.end}">`, 'filter__item--wide')}
           <div class="filter__ops"><button class="btn btn--primary" data-act="query">${IC.search}立即查询</button><button class="btn btn--plain" data-act="reset">重置</button></div>
         </div></div>
-        ${canGen ? `<div class="panel"><div class="toolbar"><div class="f-c" style="gap:.05208rem">${fItem('生成日期', `<input class="input" type="date" data-rq max="${S.fmtDate(Date.now())}" value="${st.rq}">`)}<span class="c-light" style="font-size:.0625rem">按所选日期团队登记的物品生成汇总，生成后需人工确认再发布</span></div>
+        ${canGen ? `<div class="panel"><div class="toolbar"><div class="f-c" style="gap:.05208rem">${fItem('生成日期', `<input class="input" type="date" data-rq max="${S.fmtDate(Date.now())}" value="${st.rq}">`)}<span class="c-light" style="font-size:.0625rem">按所选日期的团队登记和学生自主登记生成汇总，生成后需人工确认再发布</span></div>
           <div class="toolbar__ops"><button class="btn btn--primary" data-act="gen">生成汇总</button></div></div></div>` : ''}
         <div class="panel panel--grow"><div class="table-wrap"><table class="table table--admin">
           <thead><tr><th>序号</th><th>汇总日期</th><th>物品数量</th><th>校区分布</th><th>种类分布</th><th>状态</th><th>生成人</th><th>确认发布</th><th class="col-fixed">操作</th></tr></thead>
@@ -1192,19 +1192,39 @@
       }
     });
   }
+  function openPointSchedule(id) {
+    const p = S.lfPoint(id);
+    UI.open({
+      kind: 'dialog', title: '修正时间地点', width: '4.8rem',
+      render: () => `<div class="form">
+        <div class="form-item"><label class="form-item__label">服务点</label><div class="form-item__ctrl" style="line-height:.16667rem">${esc(p.mc)}</div></div>
+        <div class="form-item"><label class="form-item__label">地址</label><div class="form-item__ctrl"><input class="input" data-k="dz" data-keep="dz" maxlength="40" value="${esc(p.dz)}" placeholder="如：校本部学生活动中心一楼"></div></div>
+        <div class="form-item"><label class="form-item__label req">值班安排</label><div class="form-item__ctrl"><input class="input" data-k="zbap" data-keep="zbap" maxlength="40" value="${esc(p.zbap)}" placeholder="如：周一至周五 12:00-14:00、17:30-19:30"></div></div>
+        <div class="form-item"><label class="form-item__label">联系方式</label><div class="form-item__ctrl"><input class="input" data-k="lxfs" data-keep="lxfs" maxlength="40" value="${esc(p.lxfs)}"></div></div>
+        <div class="form-item"><label class="form-item__label">临时调整</label><div class="form-item__ctrl"><input class="input" data-k="lstz" data-keep="lstz" maxlength="40" value="${esc(p.lstz)}" placeholder="留空则不展示"><div class="form-item__hint">管理人员按实际值班时间修正，前台服务点信息会同步更新</div></div></div>
+      </div><div class="dlg-foot"><button class="btn" data-close>取消</button><button class="btn btn--primary" data-ok>保存</button></div>`,
+      on: {
+        'click [data-ok]': (e, el, l) => {
+          const v = {}; l.body.querySelectorAll('[data-k]').forEach(i => { v[i.dataset.k] = i.value.trim(); });
+          S.lfUpdatePointSchedule(id, v); toast('已按实际安排更新', 'success'); l.close();
+        }
+      }
+    });
+  }
   PC.pages[LOST + '/points'] = {
     admin: true, lost: true, title: '服务点与成员',
     init: () => ({ members: buildMemberDemo() }),
     render(st) {
       const can = S.lfCan('admin');
       const pts = S.lfPoints(), members = st.members || (st.members = buildMemberDemo());
-      return `${can ? '' : '<div class="warn-bar">⚠ 当前账号仅可查看服务点与成员名单。</div>'}
+      const showOps = can || pts.some(p => S.lfCanEditPoint(p.id));
+      return `${can ? '' : showOps ? '<div class="warn-bar">地址和值班安排可由负责该服务点的管理人员按实际工作时间修正。</div>' : '<div class="warn-bar">⚠ 当前账号仅可查看服务点与成员名单。</div>'}
         <div class="panel">
           <div class="toolbar" style="margin-bottom:.05208rem"><span class="sec-title" style="margin:0">服务点（${pts.length}）</span><div class="toolbar__ops">${can ? '<button class="btn btn--primary" data-act="addPoint">新增服务点</button>' : ''}</div></div>
-          <div class="table-wrap"><table class="table table--admin"><thead><tr><th>排序</th><th>服务点名称</th><th>校区</th><th>地址</th><th>值班安排</th><th>联系方式</th><th>临时调整</th><th>负责成员</th><th>在保物品</th>${can ? '<th class="col-fixed">操作</th>' : ''}</tr></thead>
+          <div class="table-wrap"><table class="table table--admin"><thead><tr><th>排序</th><th>服务点名称</th><th>校区</th><th>地址</th><th>值班安排</th><th>联系方式</th><th>临时调整</th><th>负责成员</th><th>在保物品</th>${showOps ? '<th class="col-fixed">操作</th>' : ''}</tr></thead>
           <tbody>${pts.length ? pts.map(p => `<tr><td>${p.px}</td><td>${esc(p.mc)}</td><td>${esc(p.xq || '—')}</td><td>${p.dz ? esc(p.dz) : '<span class="status-tag status-tag--gray">待确认</span>'}</td><td>${esc(p.zbap)}</td><td>${esc(p.lxfs || '—')}</td>
             <td>${p.lstz ? `<span class="c-warn">${esc(p.lstz)}</span>` : '—'}</td><td>${p.fzrUser ? esc(p.fzrUser.xm || p.fzrUser.nc) : '—'}</td><td>${p.items}</td>
-            ${can ? `<td class="col-fixed"><div class="ops"><button class="btn-link" data-edit-point="${p.id}">编辑</button><button class="btn-link btn-link--danger" data-del-point="${p.id}">删除</button></div></td>` : ''}</tr>`).join('') : `<tr class="table__empty"><td colspan="${can ? 10 : 9}">暂无服务点</td></tr>`}</tbody></table></div>
+            ${showOps ? `<td class="col-fixed"><div class="ops">${S.lfCanEditPoint(p.id) ? `<button class="btn-link" data-fix-point="${p.id}">修正时间地点</button>` : ''}${can ? `<button class="btn-link" data-edit-point="${p.id}">编辑</button><button class="btn-link btn-link--danger" data-del-point="${p.id}">删除</button>` : ''}</div></td>` : ''}</tr>`).join('') : `<tr class="table__empty"><td colspan="${showOps ? 10 : 9}">暂无服务点</td></tr>`}</tbody></table></div>
         </div>
         <div class="panel panel--grow">
           <div class="toolbar" style="margin-bottom:.05208rem"><span class="sec-title" style="margin:0">资助团队成员（${members.length}）</span><div class="toolbar__ops"><button class="btn btn--plain" data-act="roleGuide">角色说明</button></div></div>
@@ -1215,7 +1235,7 @@
             <td class="c-light">${esc(scopeText(m.roles))}</td><td style="white-space:nowrap">${S.fmtDateTime(m.cjsj)}</td>
             <td class="col-fixed"><div class="ops"><button class="btn-link" data-cfg="${esc(m.uid)}">配置</button></div></td>
             </tr>`).join('') : '<tr class="table__empty"><td colspan="10">暂无资助团队成员</td></tr>'}</tbody></table></div>
-          <p class="c-light" style="font-size:.0625rem;margin:.05208rem 0 0">本页只展示服务点和成员名单。认定资助团队在「用户管理」里做页面示意，不会改动这里的名单，也不会改已发布物品上的标签。成员「配置」只更新本页的角色和可见范围示意。</p>
+          <p class="c-light" style="font-size:.0625rem;margin:.05208rem 0 0">地址和值班安排由负责该服务点的管理人员按实际工作时间修正。认定资助团队在「用户管理」里做页面示意，不会改动这里的名单，也不会改已发布物品上的标签。成员「配置」只更新本页的角色和可见范围示意。</p>
         </div>`;
     },
     bind(root) {
@@ -1224,6 +1244,7 @@
         else if (el.dataset.act === 'roleGuide') openRoleGuide();
       });
       UI.delegate(root, 'click', '[data-edit-point]', (e, el) => openPoint(el.dataset.editPoint));
+      UI.delegate(root, 'click', '[data-fix-point]', (e, el) => openPointSchedule(el.dataset.fixPoint));
       UI.delegate(root, 'click', '[data-del-point]', UI.guard(async (e, el) => {
         const p = S.lfPoint(el.dataset.delPoint);
         if (await UI.confirm(`确认删除服务点「${p.mc}」？`, { danger: true })) { S.lfDeletePoint(p.id); toast('已删除', 'success'); }
