@@ -32,8 +32,15 @@
     3: ['投诉', '曝光', '维权', '黑幕', '集体', '退钱']
   };
   /* 失物招领 */
-  const LF_XQ = ['校本部', '南校区', '新校区', '铁道校区', '湘雅校区', '天心校区', '杏林校区', '开福校区'];
-  const LF_XQ_ALIAS = { 本部: '校本部', 南校: '南校区', 新校: '新校区', 铁道: '铁道校区', 湘雅: '湘雅校区', 天心: '天心校区', 杏林: '杏林校区', 开福: '开福校区' };
+  const LF_XQ = ['岳麓山校区', '潇湘校区', '麓南校区', '天心校区', '开福校区', '杏林校区'];
+  const LF_XQ_ALIAS = {
+    岳麓山: '岳麓山校区', 本部: '岳麓山校区', 校本部: '岳麓山校区',
+    潇湘: '潇湘校区', 新校: '潇湘校区', 新校区: '潇湘校区',
+    麓南: '麓南校区', 南校: '麓南校区', 南校区: '麓南校区',
+    天心: '天心校区', 铁道: '天心校区', 铁道校区: '天心校区',
+    开福: '开福校区', 湘雅: '开福校区', 湘雅校区: '开福校区',
+    杏林: '杏林校区', 湘雅新校区: '杏林校区'
+  };
   const LF_FL = [
     { value: 'campuscard', label: '校园卡' },
     { value: 'idcard', label: '其他证件卡片' },
@@ -59,7 +66,7 @@
   const LF_DAYS = [{ value: 0, label: '不限' }, { value: 1, label: '今天' }, { value: 3, label: '近 3 天' }, { value: 7, label: '近 7 天' }, { value: 30, label: '近 30 天' }];
   const LF_EXPIRE = 730 * DAY;
   const NICK_A = ['快乐的', '安静的', '奔跑的', '发光的', '爱吃饭的', '早起的', '迷路的', '认真的', '佛系的', '热心的'];
-  const NICK_B = ['小麓', '岳麓山', '湘江风', '樱花', '桂花糕', '橘子洲', '升华楼', '图书馆猫', '北三门', '南校区'];
+  const NICK_B = ['小麓', '岳麓山', '湘江风', '樱花', '桂花糕', '橘子洲', '升华楼', '图书馆猫', '北三门', '麓南校区'];
 
   /* ---------- 工具 ---------- */
   const uid = (p = '') => p + Math.random().toString(36).slice(2, 10) + Date.now().toString(36).slice(-4);
@@ -122,7 +129,7 @@
 
     const colleges = ['计算机学院', '自动化学院', '机电工程学院', '冶金与环境学院', '资源加工与生物工程学院', '建筑与艺术学院', '法学院', '湘雅医学院', '商学院', '文学院', '材料科学与工程学院', '能源科学与工程学院', '交通运输工程学院', '外国语学院'];
     const realNames = ['林知夏', '周以安', '陈语桐', '王子墨', '李星河', '赵一鸣', '孙若溪', '吴嘉树', '郑可欣', '冯启航', '何书言', '许乐乐', '沈南乔', '韩予白', '唐小满', '曹景行', '邓思远', '萧清和', '彭雨眠', '罗一帆', '谢晚晴', '高子昂'];
-    const nicks = ['橘子洲的风', '岳麓山下', '小麓同学', '奔跑的蜗牛', '图书馆占座王', '早八战士', '南校区吃货', '湘江夜跑', '桂花糕', '升华楼的猫', '北三门路人', '樱花雨', '学术小白', '用户3f8a21c0', '用户9b2e7d14', '晚风', '一只柠檬', '熬夜冠军', '数学不挂', '岳麓书院打卡', '用户5c61aa09', '咕咕咕'];
+    const nicks = ['橘子洲的风', '岳麓山下', '小麓同学', '奔跑的蜗牛', '图书馆占座王', '早八战士', '麓南校区吃货', '湘江夜跑', '桂花糕', '升华楼的猫', '北三门路人', '樱花雨', '学术小白', '用户3f8a21c0', '用户9b2e7d14', '晚风', '一只柠檬', '熬夜冠军', '数学不挂', '岳麓书院打卡', '用户5c61aa09', '咕咕咕'];
     const avatarColors = ['#5B8FF9', '#61DDAA', '#F6BD16', '#7262FD', '#78D3F8', '#F08BB4', '#9661BC', '#F6903D', '#008685', '#D37099'];
 
     const users = [{
@@ -276,10 +283,10 @@
       });
     });
     const lfPoints = [
-      { id: 'lp1', mc: '校本部服务点', xq: '校本部', dz: '校本部学生活动中心一楼 资助团队值班室', zbap: '周一至周五 12:00-14:00、17:30-19:30', lxfs: '站内私信或值班电话 0731-88830001', lstz: '', fzr: 'u_zz1', px: 1 },
-      { id: 'lp2', mc: '新校区服务点', xq: '新校区', dz: '新校区图书馆负一楼 学生服务台', zbap: '周一至周五 12:00-14:00、17:30-19:30', lxfs: '站内私信或值班电话 0731-88830002', lstz: '本周五下午值班暂停，周六 10:00 恢复', fzr: 'u_zz2', px: 2 },
-      { id: 'lp3', mc: '铁道校区服务点', xq: '铁道校区', dz: '铁道校区学生事务中心 102 室', zbap: '周二、周四 12:00-14:00', lxfs: '站内私信', lstz: '', fzr: 'u_zz1', px: 3 },
-      { id: 'lp4', mc: '湘雅校区服务点', xq: '湘雅校区', dz: '湘雅校区学生活动中心一楼', zbap: '周一、周三、周五 12:00-14:00', lxfs: '站内私信', lstz: '', fzr: 'u_zz1', px: 4 },
+      { id: 'lp1', mc: '岳麓山校区服务点', xq: '岳麓山校区', dz: '岳麓山校区学生活动中心一楼 资助团队值班室', zbap: '周一至周五 12:00-14:00、17:30-19:30', lxfs: '站内私信或值班电话 0731-88830001', lstz: '', fzr: 'u_zz1', px: 1 },
+      { id: 'lp2', mc: '潇湘校区服务点', xq: '潇湘校区', dz: '潇湘校区图书馆负一楼 学生服务台', zbap: '周一至周五 12:00-14:00、17:30-19:30', lxfs: '站内私信或值班电话 0731-88830002', lstz: '本周五下午值班暂停，周六 10:00 恢复', fzr: 'u_zz2', px: 2 },
+      { id: 'lp3', mc: '天心校区事务服务点', xq: '天心校区', dz: '天心校区学生事务中心 102 室', zbap: '周二、周四 12:00-14:00', lxfs: '站内私信', lstz: '', fzr: 'u_zz1', px: 3 },
+      { id: 'lp4', mc: '开福校区服务点', xq: '开福校区', dz: '开福校区学生活动中心一楼', zbap: '周一、周三、周五 12:00-14:00', lxfs: '站内私信', lstz: '', fzr: 'u_zz1', px: 4 },
       { id: 'lp5', mc: '天心校区服务点', xq: '天心校区', dz: '天心校区图书馆一楼服务台', zbap: '周一至周五 17:30-19:30', lxfs: '站内私信', lstz: '', fzr: 'u_zz1', px: 5 },
       { id: 'lp6', mc: '毓秀楼服务点', xq: '', dz: '', zbap: '待团队确认', lxfs: '站内私信', lstz: '', fzr: 'u_zz1', px: 6 },
       { id: 'lp7', mc: '雷锋岗服务点', xq: '', dz: '', zbap: '待团队确认', lxfs: '站内私信', lstz: '', fzr: 'u_zz1', px: 7 }
@@ -307,58 +314,58 @@
       lfItems.push(it);
       return it;
     };
-    const f1 = lfItem({ fl: 'digital', mc: '白色蓝牙耳机盒', xq: '新校区', dd: '图书馆三楼自习区', fbsj: at(0, 9, 20), sj: at(0, 8), sjsm: '上午', nr: '带透明保护套，外壳有轻微划痕。', tps: ['ph:6:耳机盒'], ly: 'team', fbrid: 'u_zz2', bgdid: 'lp2' });
-    const f2 = lfItem({ fl: 'campuscard', mc: '校园卡 · 王*墨', xq: '校本部', dd: '升华楼 A 座教室', fbsj: at(0, 9, 40), sjsm: '上午', nr: '冶金与环境学院', tps: ['ph:3:校园卡'], ly: 'team', fbrid: 'u_zz1', bgdid: 'lp1', card: { xm: '王子墨', xh: '8225130103', xy: '冶金与环境学院' } });
-    const f3 = lfItem({ fl: 'daily', mc: '黑色折叠伞', xq: '校本部', dd: '二食堂门口', fbsj: at(0, 10), sjsm: '中午', nr: '伞柄处挂有一个小熊挂件。', tps: ['ph:5:雨伞'], ly: 'team', fbrid: 'u_zz1', bgdid: 'lp1' });
-    const f4 = lfItem({ fl: 'daily', mc: '蓝色保温杯', xq: '新校区', dd: '体育馆看台', fbsj: at(1, 18), sjsm: '傍晚', nr: '杯身有贴纸。', tps: ['ph:1:保温杯'], ly: 'team', fbrid: 'u_zz2', bgdid: 'lp2' });
-    const f5 = lfItem({ fl: 'idcard', mc: '身份证 · 李*河', xq: '铁道校区', dd: '教学楼 B 座一楼', fbsj: at(1, 17), nr: '证件号码已遮挡，领取时请携带校园卡核对。', tps: [], ly: 'team', fbrid: 'u_zz1', bgdid: 'lp3', card: { xm: '李星河', xh: '', xy: '' } });
+    const f1 = lfItem({ fl: 'digital', mc: '白色蓝牙耳机盒', xq: '潇湘校区', dd: '图书馆三楼自习区', fbsj: at(0, 9, 20), sj: at(0, 8), sjsm: '上午', nr: '带透明保护套，外壳有轻微划痕。', tps: ['ph:6:耳机盒'], ly: 'team', fbrid: 'u_zz2', bgdid: 'lp2' });
+    const f2 = lfItem({ fl: 'campuscard', mc: '校园卡 · 王*墨', xq: '岳麓山校区', dd: '升华楼 A 座教室', fbsj: at(0, 9, 40), sjsm: '上午', nr: '冶金与环境学院', tps: ['ph:3:校园卡'], ly: 'team', fbrid: 'u_zz1', bgdid: 'lp1', card: { xm: '王子墨', xh: '8225130103', xy: '冶金与环境学院' } });
+    const f3 = lfItem({ fl: 'daily', mc: '黑色折叠伞', xq: '岳麓山校区', dd: '二食堂门口', fbsj: at(0, 10), sjsm: '中午', nr: '伞柄处挂有一个小熊挂件。', tps: ['ph:5:雨伞'], ly: 'team', fbrid: 'u_zz1', bgdid: 'lp1' });
+    const f4 = lfItem({ fl: 'daily', mc: '蓝色保温杯', xq: '潇湘校区', dd: '体育馆看台', fbsj: at(1, 18), sjsm: '傍晚', nr: '杯身有贴纸。', tps: ['ph:1:保温杯'], ly: 'team', fbrid: 'u_zz2', bgdid: 'lp2' });
+    const f5 = lfItem({ fl: 'idcard', mc: '身份证 · 李*河', xq: '天心校区', dd: '教学楼 B 座一楼', fbsj: at(1, 17), nr: '证件号码已遮挡，领取时请携带校园卡核对。', tps: [], ly: 'team', fbrid: 'u_zz1', bgdid: 'lp3', card: { xm: '李星河', xh: '', xy: '' } });
     const f6 = lfItem({ fl: 'digital', mc: 'AirPods 充电盒', xq: '天心校区', dd: '天心校区图书馆二楼', fbsj: at(3, 12), sjsm: '中午', nr: '白色，盒盖内侧有刻字。', tps: ['ph:2:充电盒'], ly: 'team', fbrid: 'u_zz1', bgdid: 'lp5', zt: 'checking' });
-    const f7 = lfItem({ fl: 'campuscard', mc: '校园卡 · 赵*鸣', xq: '校本部', dd: '毓秀楼一楼大厅', fbsj: at(5, 11), nr: '建筑与艺术学院', tps: ['ph:3:校园卡'], ly: 'team', fbrid: 'u_zz1', bgdid: 'lp6', zt: 'returned', card: { xm: '赵一鸣', xh: '8223150105', xy: '建筑与艺术学院' }, gxsj: at(4, 13), logs: [{ t: at(4, 13), act: '完成归还', uid: 'u_zz1', note: '按认领申请交接完成' }] });
-    lfItem({ fl: 'other', mc: '英语四级真题书', xq: '湘雅校区', dd: '湘雅校区教学楼 302', fbsj: at(12, 15), nr: '书内写有铅笔批注。', tps: ['ph:7:真题书'], ly: 'team', fbrid: 'u_zz1', bgdid: 'lp4' });
-    lfItem({ fl: 'daily', mc: '灰色双肩包', xq: '校本部', dd: '新民路运动场', fbsj: ago(790), nr: '包内有一本笔记本。', tps: ['ph:8:双肩包'], ly: 'team', fbrid: 'u_zz1', bgdid: 'lp1' });
-    const fPhone = lfItem({ fl: 'digital', mc: '粉色手机壳（iPhone）', xq: '南校区', dd: '南校区食堂二楼', fbsj: at(0, 8, 10), sjsm: '上午', nr: '在靠窗的座位上捡到，我先代为保管，可私信我。', tps: ['ph:4:手机壳'], fbrid: 'u102' });
-    lfItem({ fl: 'campuscard', mc: '校园卡 · 冯*航', xq: '校本部', dd: '图书馆三楼', fbsj: at(3, 16), nr: '文学院', tps: ['ph:3:校园卡'], fbrid: 'u106', bgfs: 'point', bgdid: 'lp1', card: { xm: '冯启航', xh: '8223190109', xy: '文学院' }, logs: [{ t: at(3, 18), act: '转交服务点', uid: 'u106', note: '发布同学保管 → 校本部服务点' }] });
+    const f7 = lfItem({ fl: 'campuscard', mc: '校园卡 · 赵*鸣', xq: '岳麓山校区', dd: '毓秀楼一楼大厅', fbsj: at(5, 11), nr: '建筑与艺术学院', tps: ['ph:3:校园卡'], ly: 'team', fbrid: 'u_zz1', bgdid: 'lp6', zt: 'returned', card: { xm: '赵一鸣', xh: '8223150105', xy: '建筑与艺术学院' }, gxsj: at(4, 13), logs: [{ t: at(4, 13), act: '完成归还', uid: 'u_zz1', note: '按认领申请交接完成' }] });
+    lfItem({ fl: 'other', mc: '英语四级真题书', xq: '开福校区', dd: '开福校区教学楼 302', fbsj: at(12, 15), nr: '书内写有铅笔批注。', tps: ['ph:7:真题书'], ly: 'team', fbrid: 'u_zz1', bgdid: 'lp4' });
+    lfItem({ fl: 'daily', mc: '灰色双肩包', xq: '岳麓山校区', dd: '新民路运动场', fbsj: ago(790), nr: '包内有一本笔记本。', tps: ['ph:8:双肩包'], ly: 'team', fbrid: 'u_zz1', bgdid: 'lp1' });
+    const fPhone = lfItem({ fl: 'digital', mc: '粉色手机壳（iPhone）', xq: '麓南校区', dd: '麓南校区食堂二楼', fbsj: at(0, 8, 10), sjsm: '上午', nr: '在靠窗的座位上捡到，我先代为保管，可私信我。', tps: ['ph:4:手机壳'], fbrid: 'u102' });
+    lfItem({ fl: 'campuscard', mc: '校园卡 · 冯*航', xq: '岳麓山校区', dd: '图书馆三楼', fbsj: at(3, 16), nr: '文学院', tps: ['ph:3:校园卡'], fbrid: 'u106', bgfs: 'point', bgdid: 'lp1', card: { xm: '冯启航', xh: '8223190109', xy: '文学院' }, logs: [{ t: at(3, 18), act: '转交服务点', uid: 'u106', note: '发布同学保管 → 岳麓山校区服务点' }] });
     const f12 = lfItem({ fl: 'digital', mc: '银色 U 盘 64G', xq: '开福校区', dd: '开福校区教学楼一楼', fbsj: at(2, 10), nr: 'U 盘上挂有红色挂绳。', tps: ['ph:9:U盘'], fbrid: 'u105' });
-    const l1 = lfItem({ lx: 'lost', fl: 'digital', mc: '白色耳机盒', xq: '新校区', dd: '图书馆到食堂之间', fbsj: at(0, 13), sj: at(0, 12), sjsm: '12 时至 14 时', nr: '可能在图书馆至食堂的路上遗失，外有透明保护套。', tps: ['ph:6:耳机'], fbrid: 'u101' });
-    lfItem({ lx: 'lost', fl: 'daily', mc: '黑色长柄雨伞', xq: '校本部', dd: '升华楼至二食堂', fbsj: at(1, 19), sjsm: '晚上', nr: '伞面有白色波点。', tps: [], fbrid: 'u108' });
-    lfItem({ lx: 'lost', fl: 'idcard', mc: '学生证', xq: '铁道校区', dd: '铁道校区图书馆', fbsj: at(4, 9), sjsm: '上午', nr: '学生证夹在蓝色卡套里。', tps: [], fbrid: 'u110' });
-    lfItem({ lx: 'lost', fl: 'daily', mc: '蓝色水杯', xq: '新校区', dd: '新校区一食堂', fbsj: at(6, 12), nr: '已经找到了，谢谢大家。', tps: ['ph:1:水杯'], fbrid: 'u112', zt: 'found' });
-    lfItem({ fl: 'other', mc: '一串宿舍钥匙', xq: '校本部', dd: '二舍门口台阶', fbsj: at(42, 15), sjsm: '下午', nr: '钥匙扣上挂着一块黄色门禁牌，背面写着「12 栋」。在服务点放了一个多月，还没人来领。', tps: ['ph:10:钥匙'], ly: 'team', fbrid: 'u_zz1', bgdid: 'lp1' });
-    lfItem({ fl: 'daily', mc: '透明近视眼镜盒', xq: '校本部', dd: '逸夫楼 201 教室', fbsj: at(6, 12), sjsm: '中午', nr: '盒盖内侧贴着一张手写课程表。', tps: ['ph:11:眼镜盒'], ly: 'team', fbrid: 'u_zz1', bgdid: 'lp1', zt: 'withdrawn', cxyy: '失主当晚到服务点直接取回了，和当场归还的记录重复，先撤回。', gxsj: at(6, 18), logs: [{ t: at(6, 18), act: '撤回', uid: 'u_zz1', note: '失主当晚到服务点直接取回了，和当场归还的记录重复，先撤回。' }] });
-    const fKb = lfItem({ fl: 'digital', mc: '银色机械键盘', xq: '铁道校区', dd: '学生事务中心门口长椅', fbsj: at(2, 11), sjsm: '上午', nr: '87 键，空格键右侧有一小块掉漆。', tps: ['ph:12:键盘'], ly: 'team', fbrid: 'u_zz1', bgdid: 'lp3', zt: 'checking', gxsj: at(1, 16), logs: [{ t: at(1, 16), act: '进入核对', uid: 'u_zz1', note: '认领申请核对通过' }] });
-    const fBag = lfItem({ fl: 'daily', mc: '深蓝色双肩包', xq: '湘雅校区', dd: '湘雅校区图书馆一楼大厅', fbsj: at(4, 15), sjsm: '下午', nr: '前袋装着一本专业课笔记，封面写了姓名。', tps: ['ph:13:双肩包'], ly: 'team', fbrid: 'u_zz1', bgdid: 'lp4', zt: 'checking', gxsj: at(2, 11), logs: [{ t: at(3, 11), act: '进入核对', uid: 'u_zz1', note: '认领申请核对通过' }] });
-    const fEar = lfItem({ fl: 'digital', mc: '灰色有线耳机', xq: '校本部', dd: '中南讲堂后排座位', fbsj: at(9, 18), sjsm: '晚上', nr: '线材是灰色的，线上有一个小麦克风。', tps: ['ph:14:有线耳机'], ly: 'team', fbrid: 'u_zz1', bgdid: 'lp1', gxsj: at(8, 10) });
+    const l1 = lfItem({ lx: 'lost', fl: 'digital', mc: '白色耳机盒', xq: '潇湘校区', dd: '图书馆到食堂之间', fbsj: at(0, 13), sj: at(0, 12), sjsm: '12 时至 14 时', nr: '可能在图书馆至食堂的路上遗失，外有透明保护套。', tps: ['ph:6:耳机'], fbrid: 'u101' });
+    lfItem({ lx: 'lost', fl: 'daily', mc: '黑色长柄雨伞', xq: '岳麓山校区', dd: '升华楼至二食堂', fbsj: at(1, 19), sjsm: '晚上', nr: '伞面有白色波点。', tps: [], fbrid: 'u108' });
+    lfItem({ lx: 'lost', fl: 'idcard', mc: '学生证', xq: '天心校区', dd: '天心校区图书馆', fbsj: at(4, 9), sjsm: '上午', nr: '学生证夹在蓝色卡套里。', tps: [], fbrid: 'u110' });
+    lfItem({ lx: 'lost', fl: 'daily', mc: '蓝色水杯', xq: '潇湘校区', dd: '潇湘校区一食堂', fbsj: at(6, 12), nr: '已经找到了，谢谢大家。', tps: ['ph:1:水杯'], fbrid: 'u112', zt: 'found' });
+    lfItem({ fl: 'other', mc: '一串宿舍钥匙', xq: '岳麓山校区', dd: '二舍门口台阶', fbsj: at(42, 15), sjsm: '下午', nr: '钥匙扣上挂着一块黄色门禁牌，背面写着「12 栋」。在服务点放了一个多月，还没人来领。', tps: ['ph:10:钥匙'], ly: 'team', fbrid: 'u_zz1', bgdid: 'lp1' });
+    lfItem({ fl: 'daily', mc: '透明近视眼镜盒', xq: '岳麓山校区', dd: '逸夫楼 201 教室', fbsj: at(6, 12), sjsm: '中午', nr: '盒盖内侧贴着一张手写课程表。', tps: ['ph:11:眼镜盒'], ly: 'team', fbrid: 'u_zz1', bgdid: 'lp1', zt: 'withdrawn', cxyy: '失主当晚到服务点直接取回了，和当场归还的记录重复，先撤回。', gxsj: at(6, 18), logs: [{ t: at(6, 18), act: '撤回', uid: 'u_zz1', note: '失主当晚到服务点直接取回了，和当场归还的记录重复，先撤回。' }] });
+    const fKb = lfItem({ fl: 'digital', mc: '银色机械键盘', xq: '天心校区', dd: '学生事务中心门口长椅', fbsj: at(2, 11), sjsm: '上午', nr: '87 键，空格键右侧有一小块掉漆。', tps: ['ph:12:键盘'], ly: 'team', fbrid: 'u_zz1', bgdid: 'lp3', zt: 'checking', gxsj: at(1, 16), logs: [{ t: at(1, 16), act: '进入核对', uid: 'u_zz1', note: '认领申请核对通过' }] });
+    const fBag = lfItem({ fl: 'daily', mc: '深蓝色双肩包', xq: '开福校区', dd: '开福校区图书馆一楼大厅', fbsj: at(4, 15), sjsm: '下午', nr: '前袋装着一本专业课笔记，封面写了姓名。', tps: ['ph:13:双肩包'], ly: 'team', fbrid: 'u_zz1', bgdid: 'lp4', zt: 'checking', gxsj: at(2, 11), logs: [{ t: at(3, 11), act: '进入核对', uid: 'u_zz1', note: '认领申请核对通过' }] });
+    const fEar = lfItem({ fl: 'digital', mc: '灰色有线耳机', xq: '岳麓山校区', dd: '中南讲堂后排座位', fbsj: at(9, 18), sjsm: '晚上', nr: '线材是灰色的，线上有一个小麦克风。', tps: ['ph:14:有线耳机'], ly: 'team', fbrid: 'u_zz1', bgdid: 'lp1', gxsj: at(8, 10) });
     const fCup = lfItem({ fl: 'daily', mc: '绿色运动水杯', xq: '天心校区', dd: '天心校区操场看台', fbsj: at(11, 10), sjsm: '上午', nr: '杯身是磨砂的，盖子是深绿色。', tps: ['ph:15:水杯'], ly: 'team', fbrid: 'u_zz1', bgdid: 'lp5', zt: 'returned', gxsj: at(7, 18), logs: [{ t: at(7, 18), act: '完成归还', uid: 'u_zz1', note: '按认领申请交接完成' }] });
     const uSun = users.find(u => u.id === 'u107');
-    const fCard = lfItem({ fl: 'campuscard', mc: '校园卡 · 孙*溪', xq: '新校区', dd: '新校区二食堂靠窗座位', fbsj: at(4, 9), sjsm: '上午', nr: uSun.bmmc, tps: ['ph:3:校园卡'], ly: 'team', fbrid: 'u_zz2', bgdid: 'lp2', card: { xm: uSun.xm, xh: uSun.xh, xy: uSun.bmmc } });
+    const fCard = lfItem({ fl: 'campuscard', mc: '校园卡 · 孙*溪', xq: '潇湘校区', dd: '潇湘校区二食堂靠窗座位', fbsj: at(4, 9), sjsm: '上午', nr: uSun.bmmc, tps: ['ph:3:校园卡'], ly: 'team', fbrid: 'u_zz2', bgdid: 'lp2', card: { xm: uSun.xm, xh: uSun.xh, xy: uSun.bmmc } });
     const uHe = users.find(u => u.id === 'u111');
-    const fStu = lfItem({ fl: 'idcard', mc: '学生证 · 何*言', xq: '湘雅校区', dd: '湘雅校区学生活动中心值班台', fbsj: at(7, 14), sjsm: '下午', nr: '证件套是深蓝色的，内页有钢印。', tps: ['ph:16:学生证'], ly: 'team', fbrid: 'u_zz1', bgdid: 'lp4', card: { xm: uHe.xm, xh: uHe.xh, xy: uHe.bmmc }, gxsj: at(6, 12) });
+    const fStu = lfItem({ fl: 'idcard', mc: '学生证 · 何*言', xq: '开福校区', dd: '开福校区学生活动中心值班台', fbsj: at(7, 14), sjsm: '下午', nr: '证件套是深蓝色的，内页有钢印。', tps: ['ph:16:学生证'], ly: 'team', fbrid: 'u_zz1', bgdid: 'lp4', card: { xm: uHe.xm, xh: uHe.xh, xy: uHe.bmmc }, gxsj: at(6, 12) });
     const fTote = lfItem({ fl: 'daily', mc: '米色帆布袋', xq: '杏林校区', dd: '杏林校区教学楼走廊座椅', fbsj: at(1, 15), sjsm: '下午', nr: '袋子侧面有一枚橘子洲头的徽章，我先放宿舍保管，对上特征可以来取。', tps: ['ph:17:帆布袋'], fbrid: 'u101' });
-    const fGog = lfItem({ fl: 'daily', mc: '白色实验护目镜', xq: '铁道校区', dd: '铁道校区实验楼一楼大厅', fbsj: at(8, 10), sjsm: '上午', nr: '镜腿上用油性笔写了「材加」。', tps: ['ph:18:护目镜'], ly: 'team', fbrid: 'u_zz1', bgdid: 'lp3' });
-    const fPow = lfItem({ fl: 'digital', mc: '粉色充电宝', xq: '湘雅校区', dd: '湘雅校区教学楼 201', fbsj: at(8, 16), sjsm: '下午', nr: '一万毫安，背面有一道浅划痕。', tps: ['ph:19:充电宝'], ly: 'team', fbrid: 'u_zz1', bgdid: 'lp4' });
-    lfItem({ lx: 'lost', fl: 'campuscard', mc: '校园卡', xq: '湘雅校区', dd: '湘雅校区门诊到教学楼之间', fbsj: at(2, 8), sjsm: '上午', nr: '透明卡套，里面还夹着一张疫苗接种卡。', tps: ['ph:3:卡套'], fbrid: 'u104' });
+    const fGog = lfItem({ fl: 'daily', mc: '白色实验护目镜', xq: '天心校区', dd: '天心校区实验楼一楼大厅', fbsj: at(8, 10), sjsm: '上午', nr: '镜腿上用油性笔写了「材加」。', tps: ['ph:18:护目镜'], ly: 'team', fbrid: 'u_zz1', bgdid: 'lp3' });
+    const fPow = lfItem({ fl: 'digital', mc: '粉色充电宝', xq: '开福校区', dd: '开福校区教学楼 201', fbsj: at(8, 16), sjsm: '下午', nr: '一万毫安，背面有一道浅划痕。', tps: ['ph:19:充电宝'], ly: 'team', fbrid: 'u_zz1', bgdid: 'lp4' });
+    lfItem({ lx: 'lost', fl: 'campuscard', mc: '校园卡', xq: '开福校区', dd: '开福校区门诊到教学楼之间', fbsj: at(2, 8), sjsm: '上午', nr: '透明卡套，里面还夹着一张疫苗接种卡。', tps: ['ph:3:卡套'], fbrid: 'u104' });
     lfItem({ lx: 'lost', fl: 'daily', mc: '黑色拉链钱包', xq: '天心校区', dd: '天心校区食堂到宿舍的路上', fbsj: at(1, 20), sjsm: '晚上', nr: '里面有食堂饭卡和两张照片，拉链头是银色的。', tps: [], fbrid: 'u106' });
-    lfItem({ lx: 'lost', fl: 'other', mc: '实验室门禁卡', xq: '南校区', dd: '南校区实验楼门厅', fbsj: at(3, 9), sjsm: '上午', nr: '白色卡片，左上角贴了一小块蓝色胶带。', tps: ['ph:20:门禁卡'], fbrid: 'u111' });
+    lfItem({ lx: 'lost', fl: 'other', mc: '实验室门禁卡', xq: '麓南校区', dd: '麓南校区实验楼门厅', fbsj: at(3, 9), sjsm: '上午', nr: '白色卡片，左上角贴了一小块蓝色胶带。', tps: ['ph:20:门禁卡'], fbrid: 'u111' });
     lfItem({ lx: 'lost', fl: 'digital', mc: '平板触控笔', xq: '杏林校区', dd: '杏林校区图书馆二楼靠窗', fbsj: at(2, 16), sjsm: '下午', nr: '笔帽上有一圈磨白，可能落在靠窗那排。', tps: [], fbrid: 'u103' });
-    lfItem({ lx: 'lost', fl: 'daily', mc: '灰色针织帽', xq: '校本部', dd: '岳麓山登山道', fbsj: at(10, 9), sjsm: '上午', nr: '已经在一起爬山的同学那里找到了。', tps: ['ph:21:针织帽'], fbrid: 'u101', zt: 'found', gxsj: at(9, 20), logs: [{ t: at(9, 20), act: '标记已找回', uid: 'u101' }] });
-    lfItem({ lx: 'lost', fl: 'daily', mc: '条纹围巾', xq: '校本部', dd: '二食堂门口', fbsj: at(8, 13), nr: '下午去食堂失物处领回来了，谢谢帮我留意的同学。', tps: [], fbrid: 'u109', zt: 'found', gxsj: at(7, 12), logs: [{ t: at(7, 12), act: '标记已找回', uid: 'u109' }] });
+    lfItem({ lx: 'lost', fl: 'daily', mc: '灰色针织帽', xq: '岳麓山校区', dd: '岳麓山登山道', fbsj: at(10, 9), sjsm: '上午', nr: '已经在一起爬山的同学那里找到了。', tps: ['ph:21:针织帽'], fbrid: 'u101', zt: 'found', gxsj: at(9, 20), logs: [{ t: at(9, 20), act: '标记已找回', uid: 'u101' }] });
+    lfItem({ lx: 'lost', fl: 'daily', mc: '条纹围巾', xq: '岳麓山校区', dd: '二食堂门口', fbsj: at(8, 13), nr: '下午去食堂失物处领回来了，谢谢帮我留意的同学。', tps: [], fbrid: 'u109', zt: 'found', gxsj: at(7, 12), logs: [{ t: at(7, 12), act: '标记已找回', uid: 'u109' }] });
     const lfClaims = [
       { id: uid('rl_'), itemId: f1.id, sqrid: 'u101', tz: '耳机盒背面贴了一张小猫贴纸。', sjdd: '今天中午 12 点左右在图书馆三楼自习', tps: [], zt: 'more', bcyq: '请补充保护套上的特殊标记，或提供耳机连接手机的截图。', jl: '', clr: 'u_zz2', jj: null, cjsj: at(0, 13, 30), gxsj: at(0, 14), logs: [{ t: at(0, 13, 30), act: '提交申请', uid: 'u101' }, { t: at(0, 14), act: '要求补充材料', uid: 'u_zz2', note: '请补充保护套上的特殊标记，或提供耳机连接手机的截图。' }] },
       { id: uid('rl_'), itemId: f2.id, sqrid: 'u104', tz: '卡套是蓝色的，卡面左下角有磨损。', sjdd: '今天上午在升华楼 A 座上课', tps: [], zt: 'pending', bcyq: '', jl: '', clr: '', jj: null, cjsj: at(0, 11), gxsj: at(0, 11), logs: [{ t: at(0, 11), act: '提交申请', uid: 'u104' }] },
       { id: uid('rl_'), itemId: f6.id, sqrid: 'u107', tz: '盒盖内侧刻有 “WJS”。', sjdd: '三天前中午在图书馆二楼', tps: ['ph:2:购买记录'], zt: 'pass', bcyq: '', jl: '刻字与登记信息一致', clr: 'u_zz1', jj: { dd: '天心校区服务点（天心校区图书馆一楼服务台）', sj: '明天 17:30-19:30', t: at(2, 10) }, cjsj: at(3, 15), gxsj: at(2, 10), logs: [{ t: at(3, 15), act: '提交申请', uid: 'u107' }, { t: at(2, 9), act: '核对通过', uid: 'u_zz1', note: '刻字与登记信息一致' }, { t: at(2, 10), act: '安排交接', uid: 'u_zz1' }] },
       { id: uid('rl_'), itemId: f7.id, sqrid: 'u106', tz: '本人校园卡', sjdd: '在毓秀楼自习时遗失', tps: [], zt: 'done', bcyq: '', jl: '本人持证领取', clr: 'u_zz1', jj: { dd: '毓秀楼服务点', sj: '当天 12:00-14:00', t: at(4, 12) }, cjsj: at(5, 12), gxsj: at(4, 13), logs: [{ t: at(5, 12), act: '提交申请', uid: 'u106' }, { t: at(4, 12), act: '核对通过', uid: 'u_zz1' }, { t: at(4, 13), act: '完成归还', uid: 'u_zz1' }] },
       { id: uid('rl_'), itemId: f12.id, sqrid: 'u101', tz: 'U 盘里有一个“毕业设计”文件夹，红色挂绳上有一个铃铛。', sjdd: '前天上午在开福校区教学楼', tps: [], zt: 'pending', bcyq: '', jl: '', clr: '', jj: null, cjsj: at(1, 9), gxsj: at(1, 9), logs: [{ t: at(1, 9), act: '提交申请', uid: 'u101' }] },
-      { id: uid('rl_'), itemId: fKb.id, sqrid: 'u109', tz: '空格键右边那颗键掉了一小块漆，键盘是银色铝合金的。', sjdd: '前天上午在铁道学生事务中心等材料', tps: ['ph:12:掉漆'], zt: 'pass', bcyq: '', jl: '掉漆位置和登记时拍的照片对得上', clr: 'u_zz1', jj: null, cjsj: at(2, 14), gxsj: at(1, 16), logs: [{ t: at(2, 14), act: '提交申请', uid: 'u109' }, { t: at(1, 16), act: '核对通过', uid: 'u_zz1', note: '掉漆位置和登记时拍的照片对得上' }] },
-      { id: uid('rl_'), itemId: fBag.id, sqrid: 'u101', tz: '前袋笔记封面写着林知夏，内侧有一张升华楼的贴纸。', sjdd: '四天前下午在湘雅图书馆一楼占座', tps: ['ph:13:笔记'], zt: 'pass', bcyq: '', jl: '笔记封面姓名与认领人一致', clr: 'u_zz1', jj: { dd: '湘雅校区服务点（湘雅校区学生活动中心一楼）', sj: '本周三 12:00-14:00', lxfs: '站内私信或值班电话 0731-88830001', t: at(2, 11) }, cjsj: at(4, 18), gxsj: at(2, 11), logs: [{ t: at(4, 18), act: '提交申请', uid: 'u101' }, { t: at(3, 11), act: '核对通过', uid: 'u_zz1', note: '笔记封面姓名与认领人一致' }, { t: at(2, 11), act: '安排交接', uid: 'u_zz1', note: '湘雅校区服务点（湘雅校区学生活动中心一楼） · 本周三 12:00-14:00' }] },
+      { id: uid('rl_'), itemId: fKb.id, sqrid: 'u109', tz: '空格键右边那颗键掉了一小块漆，键盘是银色铝合金的。', sjdd: '前天上午在天心校区学生事务中心等材料', tps: ['ph:12:掉漆'], zt: 'pass', bcyq: '', jl: '掉漆位置和登记时拍的照片对得上', clr: 'u_zz1', jj: null, cjsj: at(2, 14), gxsj: at(1, 16), logs: [{ t: at(2, 14), act: '提交申请', uid: 'u109' }, { t: at(1, 16), act: '核对通过', uid: 'u_zz1', note: '掉漆位置和登记时拍的照片对得上' }] },
+      { id: uid('rl_'), itemId: fBag.id, sqrid: 'u101', tz: '前袋笔记封面写着林知夏，内侧有一张升华楼的贴纸。', sjdd: '四天前下午在开福校区图书馆一楼占座', tps: ['ph:13:笔记'], zt: 'pass', bcyq: '', jl: '笔记封面姓名与认领人一致', clr: 'u_zz1', jj: { dd: '开福校区服务点（开福校区学生活动中心一楼）', sj: '本周三 12:00-14:00', lxfs: '站内私信或值班电话 0731-88830001', t: at(2, 11) }, cjsj: at(4, 18), gxsj: at(2, 11), logs: [{ t: at(4, 18), act: '提交申请', uid: 'u101' }, { t: at(3, 11), act: '核对通过', uid: 'u_zz1', note: '笔记封面姓名与认领人一致' }, { t: at(2, 11), act: '安排交接', uid: 'u_zz1', note: '开福校区服务点（开福校区学生活动中心一楼） · 本周三 12:00-14:00' }] },
       { id: uid('rl_'), itemId: fEar.id, sqrid: 'u101', tz: '耳机是白色的，线很短。', sjdd: '上周在中南讲堂上晚课', tps: [], zt: 'reject', bcyq: '', jl: '实物线材是灰色的，和描述的白色线对不上', clr: 'u_zz1', jj: null, cjsj: at(9, 19), gxsj: at(8, 10), logs: [{ t: at(9, 19), act: '提交申请', uid: 'u101' }, { t: at(8, 10), act: '核对未通过', uid: 'u_zz1', note: '实物线材是灰色的，和描述的白色线对不上' }] },
       { id: uid('rl_'), itemId: fCup.id, sqrid: 'u101', tz: '杯盖内侧刻了 LZX，杯身有一道被钥匙划的印。', sjdd: '上上周上午在天心操场跑步', tps: [], zt: 'done', bcyq: '', jl: '刻字和划痕都对得上，本人领取', clr: 'u_zz1', jj: { dd: '天心校区服务点（天心校区图书馆一楼服务台）', sj: '当天 17:30-19:30', t: at(9, 11) }, cjsj: at(11, 12), gxsj: at(7, 18), logs: [{ t: at(11, 12), act: '提交申请', uid: 'u101' }, { t: at(10, 15), act: '核对通过', uid: 'u_zz1', note: '刻字和划痕都对得上' }, { t: at(9, 11), act: '安排交接', uid: 'u_zz1' }, { t: at(7, 18), act: '完成归还', uid: 'u_zz1', note: '按认领申请交接完成' }] },
-      { id: uid('rl_'), itemId: fCard.id, sqrid: 'u107', tz: '卡面左上角有一道折痕，卡套里夹着饭卡。', sjdd: '四天前早饭在新校区二食堂', tps: [], zt: 'pending', bcyq: '', jl: '', clr: '', jj: null, cjsj: at(4, 12), gxsj: at(4, 12), logs: [{ t: at(4, 12), act: '提交申请', uid: 'u107' }] },
-      { id: uid('rl_'), itemId: fStu.id, sqrid: 'u111', tz: '学生证照片是我，钢印在内页右下角。', sjdd: '上周在湘雅学生活动中心办活动', tps: ['ph:16:证件内页'], zt: 'more', bcyq: '请再补一张学生证封面和钢印的清晰照片，方便和原件对一下。', jl: '', clr: 'u_zz1', jj: null, cjsj: at(7, 17), gxsj: at(6, 12), logs: [{ t: at(7, 17), act: '提交申请', uid: 'u111' }, { t: at(6, 12), act: '要求补充材料', uid: 'u_zz1', note: '请再补一张学生证封面和钢印的清晰照片，方便和原件对一下。' }] },
+      { id: uid('rl_'), itemId: fCard.id, sqrid: 'u107', tz: '卡面左上角有一道折痕，卡套里夹着饭卡。', sjdd: '四天前早饭在潇湘校区二食堂', tps: [], zt: 'pending', bcyq: '', jl: '', clr: '', jj: null, cjsj: at(4, 12), gxsj: at(4, 12), logs: [{ t: at(4, 12), act: '提交申请', uid: 'u107' }] },
+      { id: uid('rl_'), itemId: fStu.id, sqrid: 'u111', tz: '学生证照片是我，钢印在内页右下角。', sjdd: '上周在开福校区学生活动中心办活动', tps: ['ph:16:证件内页'], zt: 'more', bcyq: '请再补一张学生证封面和钢印的清晰照片，方便和原件对一下。', jl: '', clr: 'u_zz1', jj: null, cjsj: at(7, 17), gxsj: at(6, 12), logs: [{ t: at(7, 17), act: '提交申请', uid: 'u111' }, { t: at(6, 12), act: '要求补充材料', uid: 'u_zz1', note: '请再补一张学生证封面和钢印的清晰照片，方便和原件对一下。' }] },
       { id: uid('rl_'), itemId: fTote.id, sqrid: 'u108', tz: '徽章是橘子洲头的剪影，袋子内袋有一张打印的实验报告。', sjdd: '昨天下午在杏林教学楼等同学', tps: [], zt: 'pending', bcyq: '', jl: '', clr: '', jj: null, cjsj: at(0, 11), gxsj: at(0, 11), logs: [{ t: at(0, 11), act: '提交申请', uid: 'u108' }] }
     ];
     const lfClues = [
-      { id: uid('xs_'), itemId: l1.id, uid: 'u109', dd: '新校区图书馆三楼', sj: '今天中午', nr: '看到有人把一个白色耳机盒交给了值班同学，可以去新校区服务点问问。', tps: [], cjsj: at(0, 13, 40) },
-      { id: uid('xs_'), itemId: l1.id, uid: 'u102', dd: '新校区食堂门口', sj: '昨天下午', nr: '临时失物架上没看到耳机盒，更像是已经交到图书馆值班台了。', tps: [], cjsj: at(0, 15) },
+      { id: uid('xs_'), itemId: l1.id, uid: 'u109', dd: '潇湘校区图书馆三楼', sj: '今天中午', nr: '看到有人把一个白色耳机盒交给了值班同学，可以去潇湘校区服务点问问。', tps: [], cjsj: at(0, 13, 40) },
+      { id: uid('xs_'), itemId: l1.id, uid: 'u102', dd: '潇湘校区食堂门口', sj: '昨天下午', nr: '临时失物架上没看到耳机盒，更像是已经交到图书馆值班台了。', tps: [], cjsj: at(0, 15) },
       { id: uid('xs_'), itemId: l1.id, uid: 'u104', dd: '图书馆三楼靠窗', sj: '今天中午', nr: '有同学问过是不是掉了白色耳机，你可以再去三楼服务台问一句。', tps: ['ph:6:自习区'], cjsj: at(0, 16) }
     ];
     const lfDigests = [
@@ -372,7 +379,7 @@
       { id: uid('xx_'), uid: 'u101', type: 'lost', text: '你认领的「白色蓝牙耳机盒」需要补充材料：请补充保护套上的特殊标记，或提供耳机连接手机的截图。', fromId: 'u_zz2', lfid: f1.id, cjsj: at(0, 14), read: false },
       { id: uid('xx_'), uid: 'u101', type: 'lost', text: '有同学为你的寻物「白色耳机盒」提供了线索', fromId: 'u109', lfid: l1.id, cjsj: at(0, 13, 40), read: false },
       { id: uid('xx_'), uid: 'u_zz1', type: 'lost', text: '有新的认领申请待核对：校园卡 · 王*墨', fromId: 'u104', lfid: f2.id, cjsj: at(0, 11), read: false },
-      { id: uid('xx_'), uid: 'u101', type: 'lost', text: '你认领的「深蓝色双肩包」已核对通过，请于本周三 12:00-14:00 到湘雅校区服务点领取', fromId: 'u_zz1', lfid: fBag.id, cjsj: at(2, 11), read: false },
+      { id: uid('xx_'), uid: 'u101', type: 'lost', text: '你认领的「深蓝色双肩包」已核对通过，请于本周三 12:00-14:00 到开福校区服务点领取', fromId: 'u_zz1', lfid: fBag.id, cjsj: at(2, 11), read: false },
       { id: uid('xx_'), uid: 'u101', type: 'lost', text: '你认领的「灰色有线耳机」未通过核对：实物线材是灰色的，和描述的白色线对不上', fromId: 'u_zz1', lfid: fEar.id, cjsj: at(8, 10), read: true },
       { id: uid('xx_'), uid: 'u101', type: 'lost', text: '你认领的「绿色运动水杯」已完成归还', fromId: 'u_zz1', lfid: fCup.id, cjsj: at(7, 18), read: true },
       { id: uid('xx_'), uid: 'u101', type: 'lost', text: '有同学为你的寻物「白色耳机盒」提供了线索', fromId: 'u102', lfid: l1.id, cjsj: at(0, 15), read: false },
@@ -382,15 +389,15 @@
       { id: uid('xx_'), uid: 'u_zz2', type: 'lost', text: '有新的认领申请待核对：校园卡 · 孙*溪', fromId: 'u107', lfid: fCard.id, cjsj: at(4, 12), read: false }
     );
     messages.push(
-      { id: uid('sx_'), fsrid: 'u109', jsrid: 'u101', nr: '【失物线索】关于你的「白色耳机盒」：中午在图书馆三楼看到有人把一个白色耳机盒交给了值班同学，可以去新校区服务点问问。', cjsj: at(0, 13, 40), sfyd: '0' },
+      { id: uid('sx_'), fsrid: 'u109', jsrid: 'u101', nr: '【失物线索】关于你的「白色耳机盒」：中午在图书馆三楼看到有人把一个白色耳机盒交给了值班同学，可以去潇湘校区服务点问问。', cjsj: at(0, 13, 40), sfyd: '0' },
       { id: uid('sx_'), fsrid: 'u_zz1', jsrid: 'u107', nr: '【失物招领】你认领的「AirPods 充电盒」已核对通过，请按以下安排领取：\n地点：天心校区服务点（天心校区图书馆一楼服务台）\n时间：明天 17:30-19:30\n领取时请携带校园卡或有效证件。', cjsj: at(2, 10), sfyd: '1' },
-      { id: uid('sx_'), fsrid: 'u_zz1', jsrid: 'u101', nr: '【失物招领】你认领的「深蓝色双肩包」已核对通过，请按以下安排领取：\n地点：湘雅校区服务点（湘雅校区学生活动中心一楼）\n时间：本周三 12:00-14:00\n联系：站内私信或值班电话 0731-88830001\n领取时请携带校园卡或有效证件。', cjsj: at(2, 11), sfyd: '0' },
-      { id: uid('sx_'), fsrid: 'u102', jsrid: 'u101', nr: '【失物线索】关于你的「白色耳机盒」：昨天下午我在新校区食堂门口的临时失物架上没看到耳机盒，更像是已经交到图书馆值班台了。', cjsj: at(0, 15), sfyd: '0' },
+      { id: uid('sx_'), fsrid: 'u_zz1', jsrid: 'u101', nr: '【失物招领】你认领的「深蓝色双肩包」已核对通过，请按以下安排领取：\n地点：开福校区服务点（开福校区学生活动中心一楼）\n时间：本周三 12:00-14:00\n联系：站内私信或值班电话 0731-88830001\n领取时请携带校园卡或有效证件。', cjsj: at(2, 11), sfyd: '0' },
+      { id: uid('sx_'), fsrid: 'u102', jsrid: 'u101', nr: '【失物线索】关于你的「白色耳机盒」：昨天下午我在潇湘校区食堂门口的临时失物架上没看到耳机盒，更像是已经交到图书馆值班台了。', cjsj: at(0, 15), sfyd: '0' },
       { id: uid('sx_'), fsrid: 'u104', jsrid: 'u101', nr: '【失物线索】关于你的「白色耳机盒」：中午在图书馆三楼靠窗，有同学问过是不是掉了白色耳机，你可以再去三楼服务台问一句。', cjsj: at(0, 16), sfyd: '0' }
     );
 
     return {
-      version: 5, currentUserId: 'u_admin', users, posts, comments, drafts, messages, reports, notices, depts, topics, interventions,
+      version: 6, currentUserId: 'u_admin', users, posts, comments, drafts, messages, reports, notices, depts, topics, interventions,
       lfItems, lfClaims, lfClues, lfPoints, lfMembers, lfDigests,
       replyBadge: {} // 我评论过的帖子的未读回复数 {uid: {tzid: n}}
     };
@@ -400,7 +407,7 @@
   let db = null;
   function load() {
     try { db = JSON.parse(localStorage.getItem(DB_KEY)); } catch (e) { db = null; }
-    if (!db || db.version !== 5) { db = seed(); persist(); }
+    if (!db || db.version !== 6) { db = seed(); persist(); }
     return db;
   }
   function persist() {
@@ -1014,7 +1021,7 @@
   function deleteIntervention(id) { db.interventions = db.interventions.filter(x => x.id !== id); commit(); }
 
   const EXTERNAL = [
-    { id: 'e1', source: '小红书', title: '中南的食堂到底哪个最好吃？新生求推荐', summary: '刚入学一个月，校本部几个食堂都吃了一遍，整理了一份个人排行……', views: 12800, comments: 213, shares: 54, t: 2 },
+    { id: 'e1', source: '小红书', title: '中南的食堂到底哪个最好吃？新生求推荐', summary: '刚入学一个月，岳麓山校区几个食堂都吃了一遍，整理了一份个人排行……', views: 12800, comments: 213, shares: 54, t: 2 },
     { id: 'e2', source: '知乎', title: '在中南大学读书是一种什么样的体验？', summary: '岳麓山下，湘江之滨，学风扎实，就是校区之间往返有点远……', views: 98000, comments: 1320, shares: 402, t: 5 },
     { id: 'e3', source: '微博', title: '中南大学新生开学典礼现场', summary: '今天的开学典礼，校长寄语新生“知行合一、经世致用”……', views: 45600, comments: 380, shares: 210, t: 12 },
     { id: 'e4', source: '抖音', title: '中南大学校园晚霞延时摄影', summary: '记录升华楼前的一场晚霞，评论区都在问拍摄地点……', views: 230000, comments: 2100, shares: 980, t: 20 },
@@ -1506,7 +1513,7 @@
     { id: 'u121', label: '学生 · 未完善资料（首次使用）' },
     { id: 'u113', label: '学生 · 已封禁账号' },
     { id: 'u_zz1', label: '资助团队 · 登记 + 核对成员' },
-    { id: 'u_zz2', label: '资助团队 · 登记成员（新校区）' }
+    { id: 'u_zz2', label: '资助团队 · 登记成员（潇湘校区）' }
   ];
 
   window.Store = {

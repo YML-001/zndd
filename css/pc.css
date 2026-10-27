@@ -219,13 +219,13 @@ a{color:#3087cc;text-decoration:none}
 .cat-bar__item{display:inline-flex;flex-shrink:0;align-items:center;gap:.05208rem;height:.26042rem;padding:0 .13021rem;border:none;border-radius:.28125rem;font-size:.09375rem;font-weight:700;color:#1e323f;background:linear-gradient(0deg,#fff,#eff8ff);transition:all .15s}
 .cat-bar__item img{width:.125rem;height:.125rem}
 .cat-bar__item.is-active{color:#fff;background:linear-gradient(270deg,#469fff,#065cf8)}
-.lost-entry{display:flex;align-items:center;gap:.0625rem;width:100%;height:.29167rem;margin:.02083rem 0 .08333rem;padding:0 .10417rem;border:none;border-radius:.04167rem;background:#fff;color:#1e323f;text-align:left;cursor:pointer}
-.lost-entry:hover{background:#f5fbff}
-.lost-entry img{width:.14583rem;height:.14583rem}
-.lost-entry__name{font-size:.08333rem;font-weight:700}
-.lost-entry__sub{font-size:.06771rem;color:#627079}
-.lost-entry__go{margin-left:auto;font-size:.07292rem;font-weight:600;color:#3087cc}
-.lost-entry.is-active{color:#fff;background:linear-gradient(270deg,#469fff,#065cf8);cursor:default}
+.lost-entry{display:flex;align-items:center;gap:.0625rem;width:100%;height:.36458rem;margin:.02083rem 0 .08333rem;padding:0 .08333rem 0 .10417rem;border:none;border-radius:.04167rem;background:linear-gradient(270deg,#469fff,#065cf8);color:#fff;text-align:left;cursor:pointer;box-shadow:0 .02083rem .0625rem #065cf833}
+.lost-entry:hover{filter:brightness(1.05)}
+.lost-entry img{width:.16667rem;height:.16667rem;padding:.01563rem;box-sizing:content-box;background:#fff;border-radius:.03125rem}
+.lost-entry__name{font-size:.09375rem;font-weight:700}
+.lost-entry__sub{font-size:.06771rem;color:#ffffffd9}
+.lost-entry__go{margin-left:auto;height:.1875rem;padding:0 .08333rem;border-radius:.09375rem;background:#fff;color:#2f6bff;font-size:.07292rem;font-weight:700;display:inline-flex;align-items:center}
+.lost-entry.is-active{cursor:default}
 .lost-entry.is-active .lost-entry__sub{color:#ffffffd9}
 .publish-btn{position:relative;flex-shrink:0;width:.6875rem;height:.47917rem;border:none;background:none;padding:0;cursor:pointer}
 .publish-btn__anim{width:100%;height:100%;pointer-events:none}
@@ -338,6 +338,24 @@ a{color:#3087cc;text-decoration:none}
 .rules-card__desc{margin-top:.01042rem;font-size:.0625rem;color:#627079}
 .rules-card__arrow{width:.10417rem;height:.10417rem;border-radius:.08333rem;border:.00521rem solid #fff;background:#eff8ff;display:inline-flex;align-items:center;justify-content:center;flex-shrink:0}
 .rules-card__arrow img{width:.08333rem;height:.08333rem}
+
+/* 失物列表页：数字与汇总、分类和筛选收成同一组 */
+.lf-top{display:flex;flex-direction:column;gap:.04167rem;min-width:0;margin-bottom:.0625rem;padding-bottom:.02083rem;border-bottom:.00521rem solid #e3f1f9}
+.lf-brief{display:flex;align-items:center;min-width:0;padding:.02083rem 0 .04167rem}
+.lf-brief__stats{display:flex;align-items:stretch;flex:0 0 auto}
+.lf-brief__stat{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:.01042rem;min-width:.625rem;padding:0 .08333rem}
+.lf-brief__stat+.lf-brief__stat{border-left:.00521rem solid #e3f1f9}
+.lf-brief__stat b{font-size:.11458rem;font-weight:700;line-height:1;color:#3087cc;font-variant-numeric:tabular-nums}
+.lf-brief__stat span{font-size:.0625rem;line-height:1.2;color:#627079;white-space:nowrap}
+.lf-brief__digest{flex:1;min-width:0;display:flex;align-items:center;gap:.0625rem;margin:0;padding:.02083rem .02083rem .02083rem .10417rem;border:none;border-left:.00521rem solid #e3f1f9;background:none;text-align:left}
+.lf-brief__copy{flex:1;min-width:0;display:flex;flex-direction:column;gap:.01042rem}
+.lf-brief__title{font-size:.07813rem;font-weight:700;line-height:1.3;color:#1e323f;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.lf-brief__desc{font-size:.0625rem;line-height:1.3;color:#627079;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.lf-brief__digest:hover .lf-brief__title{color:#3087cc}
+.lf-brief__go{width:.04167rem;height:.04167rem;border-right:.01042rem solid #3087cc;border-top:.01042rem solid #3087cc;transform:rotate(45deg);flex-shrink:0}
+.lf-top .bbs-home__toolbar{height:auto;padding:.02083rem 0 0;flex-wrap:wrap;min-width:0}
+.lf-top__filters{min-width:0}
+.lf-top__filters .select{max-width:100%}
 
 /* 详情抽屉 */
 .pdd{display:flex;flex-direction:column;height:100%;min-height:0}

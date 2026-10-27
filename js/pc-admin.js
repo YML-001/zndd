@@ -940,8 +940,8 @@
         </div></div>
         ${st.mode === 'card' ? `<div class="panel">
           <div class="sec-title" style="margin-top:0">粘贴校园卡信息</div>
-          <textarea class="textarea" rows="6" data-keep="cards" placeholder="每行一张卡，学院、学号、姓名、校区用空格隔开，例如：&#10;冶金与环境学院 8225130218 王子墨 本部&#10;商学院 8209220311 陈思远 新校">${esc(st.text)}</textarea>
-          <div class="toolbar" style="margin-top:.05208rem"><span class="c-light" style="font-size:.0625rem">按学院、学号、姓名、校区识别；校区可写简称（本部、新校、铁道…），未写时使用默认校区</span>
+          <textarea class="textarea" rows="6" data-keep="cards" placeholder="每行一张卡，学院、学号、姓名、校区用空格隔开，例如：&#10;冶金与环境学院 8225130218 王子墨 岳麓山&#10;商学院 8209220311 陈思远 潇湘">${esc(st.text)}</textarea>
+          <div class="toolbar" style="margin-top:.05208rem"><span class="c-light" style="font-size:.0625rem">按学院、学号、姓名、校区识别；校区可写简称（岳麓山、潇湘、麓南、天心、开福、杏林），未写时使用默认校区</span>
             <div class="toolbar__ops"><button class="btn btn--plain" data-act="sample">填入示例</button><button class="btn btn--primary" data-act="parse">识别</button></div></div>
         </div>
         ${st.parsed ? `<div class="panel panel--grow">
@@ -992,7 +992,7 @@
       const base = () => { syncDef(); const d = st.def; return { bgdid: d.bgdid, xq: d.xq, dd: d.dd || '服务点登记', sj: d.rq ? new Date(d.rq + 'T12:00').getTime() : undefined }; };
       UI.delegate(root, 'click', '[data-act]', UI.guard((e, el) => {
         const a = el.dataset.act;
-        if (a === 'sample') { st.text = '冶金与环境学院 8225130218 王一鸣 本部\n商学院 8209220311 陈思远 新校\n湘雅医学院 8301210127 刘可欣 湘雅\n交通运输工程学院 8226010203'; st.parsed = null; root.querySelector('[data-keep="cards"]').value = st.text; PC.refresh(); }
+        if (a === 'sample') { st.text = '冶金与环境学院 8225130218 王一鸣 岳麓山\n商学院 8209220311 陈思远 潇湘\n湘雅医学院 8301210127 刘可欣 开福\n交通运输工程学院 8226010203'; st.parsed = null; root.querySelector('[data-keep="cards"]').value = st.text; PC.refresh(); }
         else if (a === 'parse') {
           st.text = root.querySelector('[data-keep="cards"]').value; syncDef();
           if (!st.text.trim()) { toast('请先粘贴校园卡信息', 'warning'); return; }
@@ -1174,7 +1174,7 @@
     UI.open({
       kind: 'dialog', title: id ? '编辑服务点' : '新增服务点', width: '4.8rem',
       render: () => `<div class="form">
-        <div class="form-item"><label class="form-item__label req">服务点名称</label><div class="form-item__ctrl"><input class="input" data-k="mc" data-keep="mc" maxlength="20" placeholder="如：校本部服务点" value="${esc(p.mc)}"></div></div>
+        <div class="form-item"><label class="form-item__label req">服务点名称</label><div class="form-item__ctrl"><input class="input" data-k="mc" data-keep="mc" maxlength="20" placeholder="如：岳麓山校区服务点" value="${esc(p.mc)}"></div></div>
         <div class="form-item"><label class="form-item__label">所在校区</label><div class="form-item__ctrl"><select class="select" data-k="xq">${opts([['', '请选择']].concat(S.LF_XQ.map(x => [x, x])), p.xq)}</select></div></div>
         <div class="form-item"><label class="form-item__label">地址</label><div class="form-item__ctrl"><input class="input" data-k="dz" data-keep="dz" maxlength="40" placeholder="未确认可先留空，前台显示「由团队确认并维护」" value="${esc(p.dz)}"></div></div>
         <div class="form-item"><label class="form-item__label req">值班安排</label><div class="form-item__ctrl"><input class="input" data-k="zbap" data-keep="zbap" maxlength="40" placeholder="如：周一至周五 12:00-14:00" value="${esc(p.zbap)}"></div></div>
@@ -1198,7 +1198,7 @@
       kind: 'dialog', title: '修正时间地点', width: '4.8rem',
       render: () => `<div class="form">
         <div class="form-item"><label class="form-item__label">服务点</label><div class="form-item__ctrl" style="line-height:.16667rem">${esc(p.mc)}</div></div>
-        <div class="form-item"><label class="form-item__label">地址</label><div class="form-item__ctrl"><input class="input" data-k="dz" data-keep="dz" maxlength="40" value="${esc(p.dz)}" placeholder="如：校本部学生活动中心一楼"></div></div>
+        <div class="form-item"><label class="form-item__label">地址</label><div class="form-item__ctrl"><input class="input" data-k="dz" data-keep="dz" maxlength="40" value="${esc(p.dz)}" placeholder="如：岳麓山校区学生活动中心一楼"></div></div>
         <div class="form-item"><label class="form-item__label req">值班安排</label><div class="form-item__ctrl"><input class="input" data-k="zbap" data-keep="zbap" maxlength="40" value="${esc(p.zbap)}" placeholder="如：周一至周五 12:00-14:00、17:30-19:30"></div></div>
         <div class="form-item"><label class="form-item__label">联系方式</label><div class="form-item__ctrl"><input class="input" data-k="lxfs" data-keep="lxfs" maxlength="40" value="${esc(p.lxfs)}"></div></div>
         <div class="form-item"><label class="form-item__label">临时调整</label><div class="form-item__ctrl"><input class="input" data-k="lstz" data-keep="lstz" maxlength="40" value="${esc(p.lstz)}" placeholder="留空则不展示"><div class="form-item__hint">管理人员按实际值班时间修正，前台服务点信息会同步更新</div></div></div>

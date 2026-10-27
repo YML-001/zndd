@@ -325,8 +325,8 @@
         <div class="home-search-card" style="margin-top:16px">
           <img class="home-search-card__logo" src="${A}hero-logo.svg" alt="发声，让校园更美好">
           <label class="home-search"><img src="${A}icon-search.svg" alt=""><input data-keep="kw" data-in="kw" placeholder="搜索昵称、标题或内容" value="${esc(st.kw)}">${st.kw ? '<button class="home-search__clear" data-act="clearKw">×</button>' : ''}</label>
-          <button class="home-lost" data-act="lost"><img src="${A}lx-icon-lost-tab.svg" alt=""><span class="home-lost__name">失物招领</span><span class="home-lost__sub">捡到物品 · 寻物求助</span><span class="home-lost__go">进入</span></button>
         </div>
+        <button class="home-lost" data-act="lost"><img src="${A}lx-icon-lost-tab.svg" alt=""><span class="home-lost__name">失物招领</span><span class="home-lost__sub">捡到物品 · 寻物求助</span><span class="home-lost__go">进入</span></button>
         <div class="cat-chips">${CATS.map(c => `<button class="cat-chip ${st.lx === c.value ? 'is-active' : ''}" data-act="lx" data-v="${c.value}"><img src="${lxIcon(c.value, st.lx === c.value)}" alt="">${esc(c.label)}</button>`).join('')}</div>
         <div class="sort-row">
           <button class="sort-pill ${st.sort === 'latest' ? 'is-active' : ''}" data-act="sort" data-v="latest">最新发布</button>
@@ -338,7 +338,7 @@
           <div class="top5__box">${hot.map(hotItem).join('')}</div></div>` : ''}
         <div class="post-list">${shown.length ? shown.map(p => postCard(p)).join('') : `<div class="empty-tip">${st.onlyVote ? '暂无投票帖' : '暂无帖子'}</div>`}</div>
         ${shown.length ? `<div class="more-tip">${shown.length < list.length ? '加载中…' : '没有更多了'}</div>` : ''}
-        <button class="fab" data-act="fab">发布心声</button>
+        <button class="fab fab--voice" data-act="fab" aria-label="发布心声"><img src="${A}fab-publish.png" alt=""></button>
       </div>`;
     },
     mounted(root, st, isRefresh) {
@@ -1002,7 +1002,7 @@
       kind: 'sheet', title: '安排交接',
       render: () => `<div class="ep-sheet">
         <div class="rd__post rd__post-nr">确认后会通过私信把地点、时间和联系方式发给认领人「${esc(c.sqr.nc)}」，并跳转到会话。</div>
-        <div class="ep-label">交接地点</div><div class="ep-field"><input data-keep="dd" maxlength="60" value="${esc(d.dd)}" placeholder="如：校本部服务点"></div>
+        <div class="ep-label">交接地点</div><div class="ep-field"><input data-keep="dd" maxlength="60" value="${esc(d.dd)}" placeholder="如：岳麓山校区服务点"></div>
         <div class="ep-label">交接时间</div><div class="ep-field"><input data-keep="sj" maxlength="40" value="${esc(d.sj)}" placeholder="如：明天 12:00-14:00"></div>
         <div class="ep-label">联系方式</div><div class="ep-field"><input data-keep="lxfs" maxlength="40" value="${esc(d.lxfs)}" placeholder="选填"></div>
         <button class="btn-primary" data-ok>发送私信并进入会话</button></div>`,
@@ -1089,7 +1089,7 @@
           <div style="display:flex;gap:12px;padding:0 30px">${filtered ? '<button class="btn-ghost" style="flex:1" data-act="clearAll">清除筛选</button>' : ''}<button class="btn-primary" style="flex:1" data-act="go" data-path="${LOST}/publish" data-q="lx=lost">发布寻物</button></div>`}</div>
         ${shown.length < list.length ? '<div class="more-tip">加载中…</div>' : `<div class="more-tip"><button data-act="closed" style="color:#3087cc">${st.closed ? '只看进行中' : st.lx === 'found' ? '查看已归还的物品' : '查看已找回的物品'}</button></div>`}
         ${st.lx === 'found' && !st.closed ? '<div class="more-tip" style="padding-top:0;font-weight:500">超过两年无人认领的物品已按规定处理，不再展示</div>' : ''}
-        <button class="fab" data-act="publish">发布招领</button>
+        <button class="fab fab--pic" data-act="publish" aria-label="发布招领"><img src="${A}fab-lost.png" alt=""></button>
       </div>`;
     },
     onScroll(v, st) {
@@ -1511,7 +1511,7 @@
   };
 
   /* 批量登记校园卡，字段顺序与网页端一致：学院、学号、姓名、校区 */
-  const CARD_SAMPLE = '冶金与环境学院 8225130218 王一鸣 本部\n商学院 8209220311 陈思远 新校\n湘雅医学院 8301210127 刘可欣 湘雅\n交通运输工程学院 8226010203';
+  const CARD_SAMPLE = '冶金与环境学院 8225130218 王一鸣 岳麓山\n商学院 8209220311 陈思远 潇湘\n湘雅医学院 8301210127 刘可欣 开福\n交通运输工程学院 8226010203';
   H5.pages[LOST + '/batch'] = {
     title: '批量登记校园卡',
     init() {
@@ -1534,7 +1534,7 @@
           <label class="pub__field"><input data-keep="dd" data-in="meta" data-k="dd" maxlength="40" placeholder="如：图书馆值班台（选填）" value="${esc(st.dd)}"></label>
           <div class="pub__label"><i>*</i>粘贴校园卡信息</div>
           <div class="pub__hint">每行一张卡，按学院、学号、姓名、校区用空格隔开。未写校区时使用默认校区。</div>
-          <label class="pub__field pub__field--area"><textarea data-keep="cards" data-in="cards" maxlength="2000" placeholder="冶金与环境学院 8225130218 王一鸣 本部">${esc(st.text)}</textarea></label>
+          <label class="pub__field pub__field--area"><textarea data-keep="cards" data-in="cards" maxlength="2000" placeholder="冶金与环境学院 8225130218 王一鸣 岳麓山">${esc(st.text)}</textarea></label>
           <div class="post-card__ops"><button data-act="sample">填入示例</button><button data-act="parse">识别</button></div>
           ${st.parsed ? `<div class="pub__hint" style="margin-top:14px">共 ${st.parsed.length} 行，可登记 ${okN} 张${st.parsed.length - okN ? `，${st.parsed.length - okN} 行需修改` : ''}</div>
             ${st.parsed.map((r, i) => `<div class="rd__post" style="margin-top:10px"><div class="rd__post-bt">${i + 1}. ${r.ok ? '可登记' : esc(r.err)}</div>

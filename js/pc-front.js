@@ -461,7 +461,7 @@
   const CATS = [{ v: '', label: '全部', icon: 'tab-all' }].concat(S.LX.map(x => ({ v: x.value, label: x.label, icon: 'tab-' + x.value })));
   const lostEntry = active => {
     const sta = S.lfStation();
-    return `<button class="lost-entry ${active ? 'is-active' : ''}" data-act="lostEntry"><img src="assets/pc/tab-lost.svg" alt="" ${active ? 'style="--fill-0:#fff;--stroke-0:#fff"' : ''}><span class="lost-entry__name">失物招领</span><span class="lost-entry__sub">待认领 ${sta.pending} · 寻找中 ${sta.seeking}</span>${active ? '' : '<span class="lost-entry__go">进入</span>'}</button>`;
+    return `<button class="lost-entry ${active ? 'is-active' : ''}" data-act="lostEntry"><img src="assets/pc/tab-lost.svg" alt="" style="--fill-0:#fff;--stroke-0:#fff"><span class="lost-entry__name">失物招领</span><span class="lost-entry__sub">待认领 ${sta.pending} · 寻找中 ${sta.seeking}</span>${active ? '' : '<span class="lost-entry__go">进入</span>'}</button>`;
   };
   let bannerTimer = null, lottieAnim = null;
   PC.pages['/bbs/home/index'] = {
@@ -914,7 +914,7 @@
     UI.open({
       kind: 'dialog', title: '安排交接', width: '4.8rem',
       render: () => `<div class="form">
-          <div class="form-item"><label class="form-item__label req">交接地点</label><div class="form-item__ctrl"><input class="input" data-k="dd" value="${esc(d.dd)}" placeholder="如：校本部学生事务大厅"></div></div>
+          <div class="form-item"><label class="form-item__label req">交接地点</label><div class="form-item__ctrl"><input class="input" data-k="dd" value="${esc(d.dd)}" placeholder="如：岳麓山校区学生事务大厅"></div></div>
           <div class="form-item"><label class="form-item__label req">交接时间</label><div class="form-item__ctrl"><input class="input" data-k="sj" value="${esc(d.sj)}" placeholder="如：周三 14:00-16:00"></div></div>
           <div class="form-item"><label class="form-item__label">联系方式</label><div class="form-item__ctrl"><input class="input" data-k="lxfs" value="${esc(d.lxfs)}" placeholder="选填"><div class="form-item__hint">确认后会以私信发送给认领人 ${esc(c.sqr.nc)}</div></div></div>
         </div>
@@ -1146,7 +1146,7 @@
       kind: 'dialog', title: '修正时间地点', width: '4.8rem',
       render: () => `<div class="form">
         <div class="form-item"><label class="form-item__label">服务点</label><div class="form-item__ctrl" style="line-height:.16667rem">${esc(p.mc)}</div></div>
-        <div class="form-item"><label class="form-item__label">地址</label><div class="form-item__ctrl"><input class="input" data-k="dz" data-keep="dz" maxlength="40" value="${esc(p.dz)}" placeholder="如：校本部学生活动中心一楼"></div></div>
+        <div class="form-item"><label class="form-item__label">地址</label><div class="form-item__ctrl"><input class="input" data-k="dz" data-keep="dz" maxlength="40" value="${esc(p.dz)}" placeholder="如：岳麓山校区学生活动中心一楼"></div></div>
         <div class="form-item"><label class="form-item__label req">值班安排</label><div class="form-item__ctrl"><input class="input" data-k="zbap" data-keep="zbap" maxlength="40" value="${esc(p.zbap)}" placeholder="如：周一至周五 12:00-14:00、17:30-19:30"></div></div>
         <div class="form-item"><label class="form-item__label">联系方式</label><div class="form-item__ctrl"><input class="input" data-k="lxfs" data-keep="lxfs" maxlength="40" value="${esc(p.lxfs)}"></div></div>
         <div class="form-item"><label class="form-item__label">临时调整</label><div class="form-item__ctrl"><input class="input" data-k="lstz" data-keep="lstz" maxlength="40" value="${esc(p.lstz)}" placeholder="留空则不展示"><div class="form-item__hint">按实际值班时间修正，前台服务点信息会同步更新</div></div></div>
@@ -1168,6 +1168,8 @@
       const all = S.lfList(f), list = all.slice(0, st.limit);
       const n = lx => S.lfList({ lx }).length;
       const sta = S.lfStation(), dg = S.lfTodayDigest(), last = S.lfDigests()[0];
+      const digestTitle = dg ? esc(LF.digestTitle(dg)) : '今日汇总';
+      const digestDesc = dg ? `共 ${dg.total} 件 · 含团队与学生 · ${esc(LF.digestLine(dg))}` : last ? `今日汇总未发布 · 最近 ${S.fmtDate(last.rq).slice(5)}` : '暂无汇总';
       const filtered = st.kw || st.xq || st.fl || +st.days || st.ly;
       const team = S.lfIsTeam(), tstats = team ? S.lfStats() : null;
       const sel = (k, opts) => `<select class="select" data-f="${k}" style="width:.83333rem">${opts.map(o => `<option value="${o.value}" ${String(st[k]) === String(o.value) ? 'selected' : ''}>${o.label}</option>`).join('')}</select>`;
@@ -1178,19 +1180,35 @@
             <div class="rp-card">
               <div class="rp-tab"><button class="btn-link" data-act="back" title="返回首页" style="color:#3087cc">←</button><span class="rp-tab__chip">失物招领<button data-act="back" title="关闭">×</button></span>${S.lfCan('register') ? '<button class="btn btn--primary" data-act="pubTeam" style="margin-left:auto">发布招领</button>' : '<button class="btn btn--primary" data-act="pub" style="margin-left:auto">发布招领</button>'}</div>
               <div class="rp-panel">
-            <div class="bbs-home__toolbar">
-              <div class="sort-bar">
-                ${LF.LX_TABS.map((t, i) => `${i ? '<span class="sort-bar__sep"></span>' : ''}<button class="sort-bar__item ${st.lx === t.value ? 'is-active' : ''}" data-lx="${t.value}">${t.label} ${n(t.value)}<span class="underline-deco"></span></button>`).join('')}
+            <div class="lf-top">
+              <div class="lf-brief">
+                <div class="lf-brief__stats">
+                  <div class="lf-brief__stat"><b>${sta.todayNew}</b><span>今日登记</span></div>
+                  <div class="lf-brief__stat"><b>${sta.pending}</b><span>待认领</span></div>
+                  <div class="lf-brief__stat"><b>${sta.seeking}</b><span>寻找中</span></div>
+                </div>
+                <button type="button" class="lf-brief__digest" data-act="digest">
+                  <span class="lf-brief__copy">
+                    <span class="lf-brief__title">${digestTitle}</span>
+                    <span class="lf-brief__desc">${digestDesc}</span>
+                  </span>
+                  <span class="lf-brief__go" aria-hidden="true"></span>
+                </button>
               </div>
-              <label class="bbs-home__search"><img src="assets/h5/icon-search.svg" alt=""><input data-keep="lfkw" placeholder="搜索物品名称、地点或编号" value="${esc(st.kw)}">${st.kw ? '<button class="bbs-home__search-clear" data-act="clearKw" title="清空搜索">✕</button>' : ''}</label>
-            </div>
-            <div class="f-c" style="gap:.0625rem;margin-bottom:.0625rem;flex-wrap:wrap">
-              ${sel('xq', [{ value: '', label: '全部校区' }].concat(S.LF_XQ.map(x => ({ value: x, label: x }))))}
-              ${sel('fl', [{ value: '', label: '全部种类' }].concat(S.LF_FL))}
-              ${sel('days', S.LF_DAYS.map(d => ({ value: d.value, label: d.value ? d.label : '全部时间' })))}
-              ${sel('ly', LF.LY)}
-              <label class="check"><input type="checkbox" data-closed ${st.closed ? 'checked' : ''}>${st.lx === 'found' ? '含已归还' : '含已找回'}</label>
-              ${filtered ? '<button class="btn-link" data-act="clearFilter">清除筛选</button>' : ''}
+              <div class="bbs-home__toolbar">
+                <div class="sort-bar">
+                  ${LF.LX_TABS.map((t, i) => `${i ? '<span class="sort-bar__sep"></span>' : ''}<button class="sort-bar__item ${st.lx === t.value ? 'is-active' : ''}" data-lx="${t.value}">${t.label} ${n(t.value)}<span class="underline-deco"></span></button>`).join('')}
+                </div>
+                <label class="bbs-home__search"><img src="assets/h5/icon-search.svg" alt=""><input data-keep="lfkw" placeholder="搜索物品名称、地点或编号" value="${esc(st.kw)}">${st.kw ? '<button class="bbs-home__search-clear" data-act="clearKw" title="清空搜索">✕</button>' : ''}</label>
+              </div>
+              <div class="f-c lf-top__filters" style="gap:.0625rem;flex-wrap:wrap">
+                ${sel('xq', [{ value: '', label: '全部校区' }].concat(S.LF_XQ.map(x => ({ value: x, label: x }))))}
+                ${sel('fl', [{ value: '', label: '全部种类' }].concat(S.LF_FL))}
+                ${sel('days', S.LF_DAYS.map(d => ({ value: d.value, label: d.value ? d.label : '全部时间' })))}
+                ${sel('ly', LF.LY)}
+                <label class="check"><input type="checkbox" data-closed ${st.closed ? 'checked' : ''}>${st.lx === 'found' ? '含已归还' : '含已找回'}</label>
+                ${filtered ? '<button class="btn-link" data-act="clearFilter">清除筛选</button>' : ''}
+              </div>
             </div>
             <div class="bbs-home__list">
               ${list.length ? list.map(PC.lfCard).join('') : `<div class="bbs-home__empty">${filtered ? '没有符合条件的物品，换个条件试试' : st.lx === 'found' ? '暂无捡到的物品' : '暂无寻物信息'}<div style="margin-top:.0625rem"><button class="btn btn--plain btn--round" data-act="${st.lx === 'found' ? 'pubLost' : 'pubFound'}">${st.lx === 'found' ? '没找到？发布寻物' : '捡到东西？发布招领'}</button></div></div>`}
@@ -1200,28 +1218,16 @@
           </div>
           <aside class="bbs-home__side" style="margin-top:0">
             <section class="rules-card">
-              <div class="side-head"><h3 class="side-head__title">资助团队招领站</h3><span class="underline-deco"></span></div>
-              <div class="profile-card__stats" style="background:#fff;border-radius:.04167rem;padding:.0625rem 0">
-                <div class="profile-card__stat"><span class="profile-card__num profile-card__num--blue">${sta.todayNew}</span><span class="profile-card__label">今日登记</span></div>
-                <div class="profile-card__stat"><span class="profile-card__num profile-card__num--orange">${sta.pending}</span><span class="profile-card__label">待认领</span></div>
-                <div class="profile-card__stat"><span class="profile-card__num profile-card__num--green">${sta.seeking}</span><span class="profile-card__label">寻找中</span></div>
-              </div>
-              <div class="rules-card__list">
-                ${sideItem('digest', dg ? esc(LF.digestTitle(dg)) : '今日汇总', dg ? `共 ${dg.total} 件 · 含团队与学生 · ${esc(LF.digestLine(dg))}` : last ? `今日汇总未发布 · 最近 ${S.fmtDate(last.rq).slice(5)}` : '暂无汇总')}
-                ${sideItem('teamOnly', '只看团队登记', st.ly === 'team' ? '当前列表只显示团队登记，再点一次恢复全部' : '资助团队登记、在服务点保管的物品', st.ly === 'team' ? '筛选中' : '', st.ly === 'team')}
-              </div>
-            </section>
-            <section class="rules-card">
-              <div class="side-head"><h3 class="side-head__title">服务点与值班</h3><span class="underline-deco"></span></div>
-              <div class="rules-card__list">${S.lfPoints().slice(0, 5).map(p => `<div class="rules-card__item" style="cursor:default"><span style="min-width:0"><div class="rules-card__name">${esc(p.mc)}</div><div class="rules-card__desc">${esc(p.dz || '由团队确认地址')} · ${esc(p.zbap)}</div>${p.lstz ? `<div class="rules-card__desc c-warn">${esc(p.lstz)}</div>` : ''}</span>${S.lfCanEditPoint(p.id) ? `<button type="button" class="btn-link" data-act="fixPoint" data-id="${p.id}">修正</button>` : ''}</div>`).join('')}</div>
-            </section>
-            <section class="rules-card">
               <div class="side-head"><h3 class="side-head__title">我的失物招领</h3><span class="underline-deco"></span></div>
               <div class="rules-card__list">
                 ${sideItem('myFound', '我的发布', `捡到 ${S.lfMyItems('found').length} 件 · 寻物 ${S.lfMyItems('lost').length} 条`)}
                 ${sideItem('myClaims', '我的认领', '查看认领申请的核对进度', S.lfMyClaims('ongoing').filter(c => c.zt === 'more').length ? '待补充' : '')}
                 ${team ? sideItem('work', '招领工作台', `待认领 ${tstats.pending} · 待核对 ${tstats.claims} · 今日归还 ${tstats.todayReturned}`) : ''}
               </div>
+            </section>
+            <section class="rules-card">
+              <div class="side-head"><h3 class="side-head__title">服务点与值班</h3><span class="underline-deco"></span></div>
+              <div class="rules-card__list">${S.lfPoints().slice(0, 5).map(p => `<div class="rules-card__item" style="cursor:default"><span style="min-width:0"><div class="rules-card__name">${esc(p.mc)}</div><div class="rules-card__desc">${esc(p.dz || '由团队确认地址')} · ${esc(p.zbap)}</div>${p.lstz ? `<div class="rules-card__desc c-warn">${esc(p.lstz)}</div>` : ''}</span>${S.lfCanEditPoint(p.id) ? `<button type="button" class="btn-link" data-act="fixPoint" data-id="${p.id}">修正</button>` : ''}</div>`).join('')}</div>
             </section>
           </aside>
         </div>
@@ -1242,7 +1248,6 @@
         else if (a === 'clearFilter') { Object.assign(st, { kw: '', xq: '', fl: '', days: 0, ly: '' }); root.querySelector('[data-keep="lfkw"]').value = ''; PC.refresh(); }
         else if (a === 'pubLost' || a === 'pubFound') { if (PC.canInteract()) PC.go(LOST + '/publish', { lx: a === 'pubLost' ? 'lost' : 'found' }); }
         else if (a === 'digest') openDigests();
-        else if (a === 'teamOnly') { st.lx = 'found'; st.ly = st.ly === 'team' ? '' : 'team'; st.limit = 10; toast(st.ly === 'team' ? '已只看团队登记' : '已显示全部来源', 'success'); PC.refresh(); }
         else if (a === 'fixPoint') openPointSchedule(el.dataset.id);
         else if (a === 'myFound') openMyLost('found');
         else if (a === 'myClaims') openMyLost('claims');
