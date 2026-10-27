@@ -74,6 +74,14 @@
 .kpi-card__sub{font-size:.08333rem;font-weight:400}
 .kpi-card__value{position:absolute;left:.91667rem;top:.32813rem;font-size:.15625rem;font-weight:800;line-height:1.1}
 .kpi-card--blue .kpi-card__value{color:#0057f0}.kpi-card--cyan .kpi-card__value{color:#00bcdd}.kpi-card--orange .kpi-card__value{color:#ff9800}.kpi-card--red .kpi-card__value{color:#f43f51}
+/* 失物台账：只收紧这一组，数据概览仍用上面的大卡片 */
+.kpi-panel--compact{padding:.05208rem .10417rem}
+.kpi-card--compact{height:.5rem;padding:.04167rem .08333rem .03125rem;border-radius:.16667rem}
+.kpi-card--compact .kpi-card__icon{top:.125rem;width:.20833rem;height:.20833rem}
+.kpi-card--compact .kpi-card__icon svg{width:.09375rem;height:.09375rem}
+.kpi-card--compact .kpi-card__title{top:.07292rem;font-size:max(13px,.09375rem);line-height:1.2;white-space:nowrap}
+.kpi-card--compact .kpi-card__sub{font-size:max(12px,.07292rem);line-height:1.2}
+.kpi-card--compact .kpi-card__value{top:.21875rem;font-size:max(18px,.125rem);line-height:1.05}
 .dash-body{background:#fff;padding:.10417rem;border-radius:.04167rem}
 .dash-row{display:flex;flex-wrap:wrap;align-items:flex-start;gap:.10417rem}
 .dash-chart{flex:1 1 2.70833rem;min-width:1.45833rem}

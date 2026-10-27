@@ -812,11 +812,11 @@
     render(st) {
       const all = this.query(st), list = page(all, st), f = st.f, s = S.lfStats();
       const pts = S.lfMyPoints();
-      const kpi = (tone, icon, title, val, go, sub = '') => `<div class="kpi-card kpi-card--${tone} kpi-card--click" data-go="${go}"><span class="kpi-card__blob"></span><span class="kpi-card__icon">${icon}</span>
+      const kpi = (tone, icon, title, val, go, sub = '') => `<div class="kpi-card kpi-card--${tone} kpi-card--click kpi-card--compact" data-go="${go}"><span class="kpi-card__blob"></span><span class="kpi-card__icon">${icon}</span>
         <div class="kpi-card__title">${title}${sub ? `<span class="kpi-card__sub">${sub}</span>` : ''}</div><div class="kpi-card__value">${val}</div></div>`;
       const sel = new Set(st.sel.filter(id => list.some(x => x.id === id)));
       const ZTOPT = [['', '全部'], ['pending', '待认领'], ['checking', '核对中'], ['returned', '已归还'], ['withdrawn', '已撤回'], ['expired', '因时间久远已处理'], ['idle', '超 30 天未领']];
-      return `<div class="kpi-panel"><div class="kpi-row">
+      return `<div class="kpi-panel kpi-panel--compact"><div class="kpi-row">
           ${kpi('blue', IC.doc, '待认领', s.pending, 'pending')}
           ${kpi('cyan', IC.trend, '今日登记', s.todayNew, 'today', `今日归还 ${s.todayReturned}`)}
           ${kpi('orange', IC.chat, '待核对认领', s.claims, 'claims')}
